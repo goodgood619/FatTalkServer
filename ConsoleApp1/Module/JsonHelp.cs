@@ -3,11 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Net.Json;
+using ConsoleApp1.Models;
 namespace ConsoleApp1.Module
 {
     public class JsonHelp
     {
+        private DBhelp dBhelp;
+        public JsonHelp(){
+
+            this.dBhelp= new DBhelp();
+        }
 
         public Dictionary<string, string> getlogininfo(string data)
         {

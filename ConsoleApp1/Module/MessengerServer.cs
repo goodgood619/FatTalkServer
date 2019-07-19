@@ -52,7 +52,6 @@ namespace ConsoleApp1.Module
                 case Command.Idcheck:
                     break;
             }
-        }
 
             return sendclient;
         }

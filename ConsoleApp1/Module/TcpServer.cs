@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Threading;
 using ConsoleApp1.Models;
+
 namespace ConsoleApp1.Module
 {
     public abstract class TcpServer
@@ -49,14 +50,15 @@ namespace ConsoleApp1.Module
         {
             Socket client = (Socket)ar.AsyncState;
             client.EndReceive(ar);
+            TCPmessage tcpmessage = new TCPmessage(receivedata);
+            List<SocketData> sendclient = responseMessage(client,tcpmessage);
             try
             {
-                foreach (Socket s in clist)
+                foreach (SocketData s in sendclient)
                 {
-                    if (s != client)
-                    {
-                        s.BeginSend(receivedata, 0, receivedata.Length, 0, send_callback, s);
-                    }
+                    Socket socket = s.socket;
+                    byte[] sendmessage = s.message;
+                    socket.BeginSend(sendmessage,0,sendmessage.Length,0,send_callback,socket);
                 }
 
                 client.BeginReceive(receivedata, 0, receivedata.Length, 0, receive_callback, client);
