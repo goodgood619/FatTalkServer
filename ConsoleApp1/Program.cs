@@ -10,6 +10,7 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
+            // test
             MessengerServer messengerServer = new MessengerServer();
             Console.WriteLine("Server Start!");
             while (true)
