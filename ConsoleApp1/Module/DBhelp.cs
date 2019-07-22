@@ -17,19 +17,19 @@ namespace ConsoleApp1.Module
         }
         public bool IsexistID(string id)
         {
-            string query = $"select * from test.member where id='{id}'";
+            string query = $"select * from test.member where ID='{id}'";
             bool result = dbconnect.IsexistRow(query);
             return result;
         }
         public bool IsExistPassword(string password)
         {
-            string query = $"select * from test.member where password='{password}'";
+            string query = $"select * from test.member where Password='{password}'";
             bool result = dbconnect.IsexistRow(query);
             return result;
         }
         public bool validLogin(string id, string password)
         {
-            string query = $"select * from test.member where id='{id}' and password='{password}'";
+            string query = $"select * from test.member where ID='{id}' and Password='{password}'";
             bool result = dbconnect.IsexistRow(query);
             return result;
         }

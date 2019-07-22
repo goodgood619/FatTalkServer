@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using System.Data;
 using MySql.Data.MySqlClient;
 namespace ConsoleApp1.Module
@@ -14,7 +15,7 @@ namespace ConsoleApp1.Module
         {
             try
             {
-                string s = "Server=localhost;Database=test;Uid=root;Pwd=1234;charset=utf8";
+                string s = $"Server=localhost;Database=test;Uid=root;Pwd=1234;charset=utf8";
                 this.dbconnect = new MySqlConnection(s);
             }
             catch (Exception e)
@@ -52,7 +53,10 @@ namespace ConsoleApp1.Module
             {
                 Console.WriteLine(e.ToString());
             }
+            finally
+            {
             dbconnect.Close();
+            }
             return dataSet;
         }
         public int GetCountRow(string s)

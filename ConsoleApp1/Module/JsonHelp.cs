@@ -10,8 +10,9 @@ namespace ConsoleApp1.Module
     public class JsonHelp
     {
         private DBhelp dBhelp;
+        private JsonHelp jsonHelp;
         public JsonHelp(){
-
+            //this.jsonHelp = new JsonHelp();
             this.dBhelp= new DBhelp();
         }
 

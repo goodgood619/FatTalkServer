@@ -15,13 +15,16 @@ namespace ConsoleApp1.Module
         private JsonHelp jsonHelp;
         public MessengerServer()
         {
+            //this.jsonHelp = new JsonHelp();
             this.dBhelp = new DBhelp();
-            this.jsonHelp = new JsonHelp();
+            //this.jsonHelp = new JsonHelp();
+            Console.WriteLine($"Messenger Server Start : (Port: {serverport})");
         }
         public override List<SocketData> responseMessage(Socket socket, TCPmessage receivemessage)
         {
             List<SocketData> sendclient = new List<SocketData>();
             TCPmessage sendmessage = new TCPmessage();
+            this.jsonHelp = new JsonHelp();
             switch (receivemessage.command)
             {
                 case Command.login:
@@ -44,6 +47,7 @@ namespace ConsoleApp1.Module
                         sendmessage.check = 2;
 
                     }
+                    sendmessage.command=Command.login;
                     sendclient.Add(new SocketData(socket, sendmessage));
                     break;
                 case Command.Join:
