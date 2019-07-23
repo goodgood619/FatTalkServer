@@ -72,6 +72,7 @@ namespace ConsoleApp1.Module
                     sendclient.Add(new SocketData(socket,sendmessage));
                     break;
                 case Command.logout:
+
                     sendmessage.command = Command.logout;
                     sendclient.Add(new SocketData(socket,sendmessage));
                     break;

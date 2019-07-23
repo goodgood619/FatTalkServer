@@ -8,8 +8,8 @@ namespace ConsoleApp1.Models
 {
     public class Clientdata
     {
-        public Socket socket { get; set; }
-        public int number { get; set; }
+        public Socket socket;
+        public int number;
         public Clientdata(Socket socket,int number)
         {
             this.socket = socket;
