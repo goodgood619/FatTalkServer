@@ -34,6 +34,12 @@ namespace ConsoleApp1.Module
             ret.Add(JsonName.Phone, jsonParse.GetstringValue(JsonName.Phone));
             return ret;
         }
+        public Dictionary<string,string> getidinfo(string data){
+            Dictionary<string,string> ret= new Dictionary<string, string>();
+            JsonParse jsonParse = new JsonParse(data);
+            ret.Add(JsonName.ID,jsonParse.GetstringValue(JsonName.ID));
+            return ret;
+        }
     }
     public class JsonName
     {

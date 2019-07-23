@@ -33,6 +33,10 @@ namespace ConsoleApp1.Module
             bool result = dbconnect.IsexistRow(query);
             return result;
         }
-
+        public void join(string id,string password,string nickname,string phone){
+        
+            string query = $"insert into test.member values ('{id}','{password}','{nickname}','{phone}')";
+            dbconnect.sendquery(query);
+        }
     }
 }

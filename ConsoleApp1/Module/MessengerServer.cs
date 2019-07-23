@@ -13,6 +13,8 @@ namespace ConsoleApp1.Module
         private const int serverport = 33212;
         private DBhelp dBhelp;
         private JsonHelp jsonHelp;
+        public List<Clientdata> clientlist{get;set;}
+
         public MessengerServer()
         {
             //this.jsonHelp = new JsonHelp();
@@ -31,29 +33,47 @@ namespace ConsoleApp1.Module
                     Dictionary<string, string> logininfo = jsonHelp.getlogininfo(receivemessage.message);
                     string id = logininfo[JsonName.ID];
                     string password = logininfo[JsonName.Password];
+                    
                     bool idcheck = dBhelp.IsexistID(id);
                     bool passcheck = dBhelp.IsExistPassword(password);
                     bool validlogin = dBhelp.validLogin(id, password);
-                    if (!idcheck)
-                    {
-                        sendmessage.check = 0;
-                    }
-                    if (!passcheck)
-                    {
-                        sendmessage.check = 1;
-                    }
-                    if (!validlogin)
-                    {
-                        sendmessage.check = 2;
 
-                    }
-                    sendmessage.command=Command.login;
+                    if (!idcheck && !validlogin) sendmessage.check = 0;
+                    if (!passcheck && !validlogin) sendmessage.check = 1;
+                    if (validlogin) sendmessage.check = 2;
+                    if(!idcheck && !passcheck) sendmessage.check = 3;
+                    
+                    sendmessage.command = Command.login;
                     sendclient.Add(new SocketData(socket, sendmessage));
                     break;
                 case Command.Join:
-
+                    Dictionary<string,string> joininfo1=jsonHelp.getlogininfo(receivemessage.message);
+                    Dictionary<string,string> joininfo2 = jsonHelp.getphonenick(receivemessage.message);
+                    string joinid = joininfo1[JsonName.ID];
+                    string joinpassword = joininfo1[JsonName.Password];
+                    string joinnickname = joininfo2[JsonName.Nickname];
+                    string joinphone = joininfo2[JsonName.Phone];
+                    if(!dBhelp.IsexistID(joinid)) {
+                        dBhelp.join(joinid,joinpassword,joinnickname,joinphone);
+                        sendmessage.check= 1; //회원가입되었다는것을 의미
+                    }
+                    else sendmessage.check = 0;
+                    sendmessage.command = Command.Join;
+                    sendclient.Add(new SocketData(socket,sendmessage));
                     break;
                 case Command.Idcheck:
+                    Dictionary<string,string> idinfo = jsonHelp.getidinfo(receivemessage.message);
+                    string checkid = idinfo[JsonName.ID];
+                    if(!dBhelp.IsexistID(checkid)){
+                        sendmessage.check = 1;
+                    }
+                    else sendmessage.check = 0;
+                    sendmessage.command = Command.Idcheck;
+                    sendclient.Add(new SocketData(socket,sendmessage));
+                    break;
+                case Command.logout:
+                    sendmessage.command = Command.logout;
+                    sendclient.Add(new SocketData(socket,sendmessage));
                     break;
             }
 
