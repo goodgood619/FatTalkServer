@@ -45,6 +45,6 @@ namespace ConsoleApp1.Models
     }
     public enum Command
     {
-        Null, login, logout,Join,Idcheck
+        Null, login, logout,Join,Idcheck,Findid
     }
 }

@@ -53,6 +53,7 @@
     <Compile Include="Models\Clientdata.cs" />
     <Compile Include="Models\SocketData.cs" />
     <Compile Include="Models\TCPmessage.cs" />
+    <Compile Include="Models\Userdata.cs" />
     <Compile Include="Module\DBConnect.cs" />
     <Compile Include="Module\DBhelp.cs" />
     <Compile Include="Module\JsonHelp.cs" />

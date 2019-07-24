@@ -19,6 +19,7 @@ namespace ConsoleApp1.Module
         {
             //this.jsonHelp = new JsonHelp();
             this.dBhelp = new DBhelp();
+            this.clientlist = new List<Clientdata>();
             //this.jsonHelp = new JsonHelp();
             Console.WriteLine($"Messenger Server Start : (Port: {serverport})");
         }
@@ -40,7 +41,11 @@ namespace ConsoleApp1.Module
 
                     if (!idcheck && !validlogin) sendmessage.check = 0;
                     if (!passcheck && !validlogin) sendmessage.check = 1;
-                    if (validlogin) sendmessage.check = 2;
+                    if (validlogin)
+                    {
+                        clientlist.Add(new Clientdata(socket,id)); //서버에 login을 했으니 정보를 추가해줘야함
+                        sendmessage.check = 2;
+                    }
                     if(!idcheck && !passcheck) sendmessage.check = 3;
                     
                     sendmessage.command = Command.login;
@@ -72,6 +77,7 @@ namespace ConsoleApp1.Module
                     sendclient.Add(new SocketData(socket,sendmessage));
                     break;
                 case Command.logout:
+                    //Clientdata LogoutData = clientlist.Find(x=> (x.id == receivemessage))
 
                     sendmessage.command = Command.logout;
                     sendclient.Add(new SocketData(socket,sendmessage));

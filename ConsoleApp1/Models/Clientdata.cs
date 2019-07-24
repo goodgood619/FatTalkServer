@@ -9,11 +9,11 @@ namespace ConsoleApp1.Models
     public class Clientdata
     {
         public Socket socket;
-        public int number;
-        public Clientdata(Socket socket,int number)
+        public string id;
+        public Clientdata(Socket socket,string id)
         {
             this.socket = socket;
-            this.number = number;
+            this.id = id;
         }
     }
 }
