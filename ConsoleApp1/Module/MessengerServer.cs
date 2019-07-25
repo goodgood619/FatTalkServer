@@ -82,6 +82,19 @@ namespace ConsoleApp1.Module
                     sendmessage.command = Command.logout;
                     sendclient.Add(new SocketData(socket,sendmessage));
                     break;
+                case Command.Findid:
+                    Dictionary<string, string> findidinfo = jsonHelp.getidinfo(receivemessage.message);
+                    string findid = findidinfo[JsonName.ID];
+                    if (!dBhelp.IsexistID(findid))
+                    {
+                        string findpassword = dBhelp.Findpass(findid);
+                        //sendmessage.message(아이디와 비밀번호를 찾아서 보내야함)
+                        sendmessage.check = 1;
+                    }
+                    else sendmessage.check = 0;
+                    sendmessage.command = Command.Findid;
+                    sendclient.Add(new SocketData(socket, sendmessage));
+                    break;
             }
 
             return sendclient;
