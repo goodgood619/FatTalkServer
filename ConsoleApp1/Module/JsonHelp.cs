@@ -10,7 +10,7 @@ namespace ConsoleApp1.Module
     public class JsonHelp
     {
         private DBhelp dBhelp;
-        private JsonHelp jsonHelp;
+        //private JsonHelp jsonHelp;
         public JsonHelp(){
             //this.jsonHelp = new JsonHelp();
             this.dBhelp= new DBhelp();
@@ -39,6 +39,13 @@ namespace ConsoleApp1.Module
             JsonParse jsonParse = new JsonParse(data);
             ret.Add(JsonName.ID,jsonParse.GetstringValue(JsonName.ID));
             return ret;
+        }
+        public string logininfo(string id,string password)
+        {
+            JsonObjectCollection ret = new JsonObjectCollection();
+            ret.Add(new JsonStringValue(JsonName.ID, id));
+            ret.Add(new JsonStringValue(JsonName.Password, password));
+            return ret.ToString();
         }
     }
     public class JsonName

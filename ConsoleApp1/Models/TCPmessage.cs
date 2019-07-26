@@ -37,7 +37,8 @@ namespace ConsoleApp1.Models
             List<byte> bytedata = new List<byte>();
             bytedata.AddRange(BitConverter.GetBytes((int)command));
             bytedata.AddRange(BitConverter.GetBytes(check));
-
+            bytedata.AddRange(BitConverter.GetBytes(Encoding.Unicode.GetByteCount(message)));
+            bytedata.AddRange(Encoding.Unicode.GetBytes(message));
 
 
             return bytedata.ToArray();

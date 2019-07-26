@@ -85,10 +85,10 @@ namespace ConsoleApp1.Module
                 case Command.Findid:
                     Dictionary<string, string> findidinfo = jsonHelp.getidinfo(receivemessage.message);
                     string findid = findidinfo[JsonName.ID];
-                    if (!dBhelp.IsexistID(findid))
+                    if (dBhelp.IsexistID(findid))
                     {
                         string findpassword = dBhelp.Findpass(findid);
-                        //sendmessage.message(아이디와 비밀번호를 찾아서 보내야함)
+                        sendmessage.message = jsonHelp.logininfo(findid, findpassword);
                         sendmessage.check = 1;
                     }
                     else sendmessage.check = 0;
