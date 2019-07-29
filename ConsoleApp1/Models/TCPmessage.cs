@@ -11,12 +11,13 @@ namespace ConsoleApp1.Models
         public Command command { get; set; }
         public int check { get; set; }
         public string message { get; set; }
-
+        public int Usernumber { get; set; }
         public TCPmessage()
         {
             command = Command.Null;
             check = 0;
             message = string.Empty;
+            Usernumber = 0;
         }
 
         //1. command 2. check 3. melength, 4.message
@@ -24,10 +25,11 @@ namespace ConsoleApp1.Models
         {
             command = (Command)BitConverter.ToInt32(data, 0);
             check = BitConverter.ToInt32(data, 4);
-            int melength = BitConverter.ToInt32(data, 8);
+            Usernumber = BitConverter.ToInt32(data, 8);
+            int melength = BitConverter.ToInt32(data,12);
             if (melength > 0)
             {
-                message = Encoding.Unicode.GetString(data, 12, melength);
+                message = Encoding.Unicode.GetString(data, 16, melength);
             }
 
         }
@@ -37,15 +39,22 @@ namespace ConsoleApp1.Models
             List<byte> bytedata = new List<byte>();
             bytedata.AddRange(BitConverter.GetBytes((int)command));
             bytedata.AddRange(BitConverter.GetBytes(check));
+            bytedata.AddRange(BitConverter.GetBytes((int)Usernumber));
             bytedata.AddRange(BitConverter.GetBytes(Encoding.Unicode.GetByteCount(message)));
             bytedata.AddRange(Encoding.Unicode.GetBytes(message));
-
 
             return bytedata.ToArray();
         }
     }
     public enum Command
     {
-        Null, login, logout,Join,Idcheck,Findid
+        Null, login, logout,Join,Idcheck, Findid,Makechat,
+        Outchat,
+        Joinchat,
+        Refresh,
+        Plusfriend,
+        Removefriend,
+        Sendchat,
+        Nicknamecheck
     }
 }

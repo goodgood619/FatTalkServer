@@ -44,6 +44,10 @@ namespace ConsoleApp1.Module
                     if (validlogin)
                     {
                         clientlist.Add(new Clientdata(socket,id)); //서버에 login을 했으니 정보를 추가해줘야함
+                        int usernumber = dBhelp.Getusernumber(id);
+                        string nickname = dBhelp.Getnickname(usernumber);
+                        sendmessage.Usernumber = usernumber;
+                        sendmessage.message = jsonHelp.nickinfo(nickname);
                         sendmessage.check = 2;
                     }
                     if(!idcheck && !passcheck) sendmessage.check = 3;
@@ -58,8 +62,9 @@ namespace ConsoleApp1.Module
                     string joinpassword = joininfo1[JsonName.Password];
                     string joinnickname = joininfo2[JsonName.Nickname];
                     string joinphone = joininfo2[JsonName.Phone];
+                    int joinusernumber = dBhelp.Getjoinusernumber();
                     if(!dBhelp.IsexistID(joinid)) {
-                        dBhelp.join(joinid,joinpassword,joinnickname,joinphone);
+                        dBhelp.join(joinid,joinpassword,joinnickname,joinphone,joinusernumber);
                         sendmessage.check= 1; //회원가입되었다는것을 의미
                     }
                     else sendmessage.check = 0;
@@ -75,6 +80,17 @@ namespace ConsoleApp1.Module
                     else sendmessage.check = 0;
                     sendmessage.command = Command.Idcheck;
                     sendclient.Add(new SocketData(socket,sendmessage));
+                    break;
+                case Command.Nicknamecheck:
+                    Dictionary<string, string> nickinfo = jsonHelp.getnickinfo(receivemessage.message);
+                    string checknickname = nickinfo[JsonName.Nickname];
+                    if (!dBhelp.Isexistnickname(checknickname))
+                    {
+                        sendmessage.check = 1;
+                    }
+                    else sendmessage.check = 0;
+                    sendmessage.command = Command.Nicknamecheck;
+                    sendclient.Add(new SocketData(socket, sendmessage));
                     break;
                 case Command.logout:
                     //Clientdata LogoutData = clientlist.Find(x=> (x.id == receivemessage))
@@ -94,6 +110,9 @@ namespace ConsoleApp1.Module
                     else sendmessage.check = 0;
                     sendmessage.command = Command.Findid;
                     sendclient.Add(new SocketData(socket, sendmessage));
+                    break;
+                case Command.Plusfriend:
+
                     break;
             }
 

@@ -40,11 +40,24 @@ namespace ConsoleApp1.Module
             ret.Add(JsonName.ID,jsonParse.GetstringValue(JsonName.ID));
             return ret;
         }
+        public Dictionary<string, string> getnickinfo(string data)
+        {
+            Dictionary<string, string> ret = new Dictionary<string, string>();
+            JsonParse jsonParse = new JsonParse(data);
+            ret.Add(JsonName.Nickname, jsonParse.GetstringValue(JsonName.Nickname));
+            return ret;
+        }
         public string logininfo(string id,string password)
         {
             JsonObjectCollection ret = new JsonObjectCollection();
             ret.Add(new JsonStringValue(JsonName.ID, id));
             ret.Add(new JsonStringValue(JsonName.Password, password));
+            return ret.ToString();
+        }
+        public string nickinfo(string nickname)
+        {
+            JsonObjectCollection ret = new JsonObjectCollection();
+            ret.Add(new JsonStringValue(JsonName.Nickname, nickname));
             return ret.ToString();
         }
     }
@@ -54,5 +67,6 @@ namespace ConsoleApp1.Module
         public const string Password = "Password";
         public const string Nickname = "Nickname";
         public const string Phone = "Phone";
+        public const string Usernumber = "Usernumber";
     }
 }
