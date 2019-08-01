@@ -31,9 +31,10 @@ namespace ConsoleApp1.Module
             switch (receivemessage.command)
             {
                 case Command.login:
-                    Dictionary<string, string> logininfo = jsonHelp.getlogininfo(receivemessage.message);
+                    Dictionary<string, string> logininfo = jsonHelp.getidinfo(receivemessage.message);
+                    Dictionary<string, string> logininfo2 = jsonHelp.getpasswordinfo(receivemessage.message);
                     string id = logininfo[JsonName.ID];
-                    string password = logininfo[JsonName.Password];
+                    string password = logininfo2[JsonName.Password];
 
                     bool idcheck = dBhelp.IsexistID(id);
                     bool passcheck = dBhelp.IsExistPassword(password);
@@ -73,12 +74,14 @@ namespace ConsoleApp1.Module
                     sendclient.Add(new SocketData(socket, sendmessage));
                     break;
                 case Command.Join:
-                    Dictionary<string, string> joininfo1 = jsonHelp.getlogininfo(receivemessage.message);
-                    Dictionary<string, string> joininfo2 = jsonHelp.getphonenick(receivemessage.message);
-                    string joinid = joininfo1[JsonName.ID];
-                    string joinpassword = joininfo1[JsonName.Password];
-                    string joinnickname = joininfo2[JsonName.Nickname];
-                    string joinphone = joininfo2[JsonName.Phone];
+                    Dictionary<string, string> Joinid = jsonHelp.getidinfo(receivemessage.message);
+                    Dictionary<string, string> Joinpassword = jsonHelp.getpasswordinfo(receivemessage.message);
+                    Dictionary<string, string> Joinnickname = jsonHelp.getnickinfo(receivemessage.message);
+                    Dictionary<string, string> Joinphone = jsonHelp.getphoneinfo(receivemessage.message);
+                    string joinid = Joinid[JsonName.ID];
+                    string joinpassword = Joinpassword[JsonName.Password];
+                    string joinnickname = Joinnickname[JsonName.Nickname];
+                    string joinphone = Joinphone[JsonName.Phone];
                     int joinusernumber = dBhelp.Getjoinusernumber();
                     if (!dBhelp.IsexistID(joinid))
                     {
