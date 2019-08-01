@@ -11,10 +11,12 @@ namespace ConsoleApp1.Module
     {
         private DBhelp dBhelp;
         //private JsonHelp jsonHelp;
-        public JsonHelp(){
+        public JsonHelp()
+        {
             //this.jsonHelp = new JsonHelp();
-            this.dBhelp= new DBhelp();
+            this.dBhelp = new DBhelp();
         }
+
 
         public Dictionary<string, string> getlogininfo(string data)
         {
@@ -26,6 +28,7 @@ namespace ConsoleApp1.Module
             return ret;
         }
 
+
         public Dictionary<string, string> getphonenick(string data)
         {
             Dictionary<string, string> ret = new Dictionary<string, string>();
@@ -34,10 +37,18 @@ namespace ConsoleApp1.Module
             ret.Add(JsonName.Phone, jsonParse.GetstringValue(JsonName.Phone));
             return ret;
         }
-        public Dictionary<string,string> getidinfo(string data){
-            Dictionary<string,string> ret= new Dictionary<string, string>();
+        public Dictionary<string, string> getidinfo(string data)
+        {
+            Dictionary<string, string> ret = new Dictionary<string, string>();
             JsonParse jsonParse = new JsonParse(data);
-            ret.Add(JsonName.ID,jsonParse.GetstringValue(JsonName.ID));
+            ret.Add(JsonName.ID, jsonParse.GetstringValue(JsonName.ID));
+            return ret;
+        }
+        public Dictionary<string, string> getFnickinfo(string data)
+        {
+            Dictionary<string, string> ret = new Dictionary<string, string>();
+            JsonParse jsonParse = new JsonParse(data);
+            ret.Add(JsonName.FID, jsonParse.GetstringValue(JsonName.FID));
             return ret;
         }
         public Dictionary<string, string> getnickinfo(string data)
@@ -47,7 +58,7 @@ namespace ConsoleApp1.Module
             ret.Add(JsonName.Nickname, jsonParse.GetstringValue(JsonName.Nickname));
             return ret;
         }
-        public string logininfo(string id,string password)
+        public string logininfo(string id, string password)
         {
             JsonObjectCollection ret = new JsonObjectCollection();
             ret.Add(new JsonStringValue(JsonName.ID, id));
@@ -64,6 +75,7 @@ namespace ConsoleApp1.Module
     public class JsonName
     {
         public const string ID = "ID";
+        public const string FID = "Fid";
         public const string Password = "Password";
         public const string Nickname = "Nickname";
         public const string Phone = "Phone";
