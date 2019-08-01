@@ -10,6 +10,8 @@ namespace ConsoleApp1.Models
     {
         public Socket socket;
         public string id;
+        //test
+
         public Clientdata(Socket socket,string id)
         {
             this.socket = socket;
