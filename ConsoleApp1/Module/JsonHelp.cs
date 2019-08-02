@@ -67,6 +67,17 @@ namespace ConsoleApp1.Module
             ret.Add(new JsonStringValue(JsonName.Nickname, nickname));
             return ret.ToString();
         }
+        public string Refreshnickarrayinfo(string[] fnickarray)
+        {
+            JsonObjectCollection ret = new JsonObjectCollection();
+            JsonArrayCollection jsonArray = new JsonArrayCollection("refreshnickarray");
+            for(int i = 0; i <fnickarray.Length; i++)
+            {
+                jsonArray.Add(new JsonStringValue(null, fnickarray[i]));
+            }
+            ret.Add(jsonArray);
+            return ret.ToString();
+        }
     }
     public class JsonName
     {

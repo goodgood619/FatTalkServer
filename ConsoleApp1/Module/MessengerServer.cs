@@ -170,7 +170,9 @@ namespace ConsoleApp1.Module
                     Dictionary<string, string> refreshinfo = jsonHelp.getnickinfo(receivemessage.message);
                     string refreshnickname = refreshinfo[JsonName.Nickname];
                     int refreshcnt = dBhelp.Refreshfriendcount(refreshnickname); //nickname의 친구명수
+                    string[] fnickarray = dBhelp.Refreshnickarray(refreshnickname);
                     sendmessage.command = Command.Refresh;
+                    sendmessage.message = jsonHelp.Refreshnickarrayinfo(fnickarray);
                     sendmessage.Friendcount = refreshcnt;
                     sendclient.Add(new SocketData(socket, sendmessage));
                     break;

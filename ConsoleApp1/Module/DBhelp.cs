@@ -130,5 +130,19 @@ namespace ConsoleApp1.Module
             int cnt = ret.Tables[0].Rows.Count;
             return cnt;
         }
+        public string[] Refreshnickarray(string usernickname)
+        {
+            string query = $"select Friendnickname from test.friendlist where Nickname='{usernickname}'";
+            DataSet ret = dbconnect.selectquery(query);
+            string[] s = new string[ret.Tables[0].Rows.Count];
+            int idx = 0;
+            foreach(DataRow data in ret.Tables[0].Rows)
+            {
+                string temp = Convert.ToString(data["Friendnickname"]);
+                s[idx] = temp;
+                idx++;
+            }
+            return s;
+        }
     }
 }
