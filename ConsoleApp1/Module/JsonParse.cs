@@ -18,7 +18,7 @@ namespace ConsoleApp1.Module
         }
 
         public string GetstringValue(string name)
-        {
+            {
             string s = string.Empty;
             try
             {
@@ -38,6 +38,7 @@ namespace ConsoleApp1.Module
             {
                 JsonArrayCollection jsonArrayCollection = (JsonArrayCollection)jsonObjectCollection[name];
                 int cnt = jsonArrayCollection.Count();
+                arrayvalue = new string[cnt];
                 for (int i = 0; i < cnt; i++)
                 {
                     arrayvalue[i] = ((JsonStringValue)jsonArrayCollection[i]).Value;

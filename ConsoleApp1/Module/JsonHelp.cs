@@ -78,6 +78,12 @@ namespace ConsoleApp1.Module
             ret.Add(jsonArray);
             return ret.ToString();
         }
+        public string[] getdeletenickarrayinfo(string data)
+        {
+            JsonParse jsonParse = new JsonParse(data);
+            string[] s = jsonParse.GetstringArrayvalue("deletenickarray");
+            return s;
+        }
     }
     public class JsonName
     {

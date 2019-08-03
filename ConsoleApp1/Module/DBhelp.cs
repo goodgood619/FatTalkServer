@@ -144,5 +144,10 @@ namespace ConsoleApp1.Module
             }
             return s;
         }
+        public void deletenickarray(string usernickname,string deletenickname)
+        {
+            string query = $"delete from test.friendlist where Friendnickname='{deletenickname}' and Nickname='{usernickname}'";
+            dbconnect.sendquery(query);
+        }
     }
 }

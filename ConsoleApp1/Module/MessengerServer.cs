@@ -176,6 +176,21 @@ namespace ConsoleApp1.Module
                     sendmessage.Friendcount = refreshcnt;
                     sendclient.Add(new SocketData(socket, sendmessage));
                     break;
+                case Command.Removefriend:
+                    Dictionary<string,string> dusernickname = jsonHelp.getnickinfo(receivemessage.message);
+                    string rusernickname = dusernickname[JsonName.Nickname];
+                    string[] removenickarray = jsonHelp.getdeletenickarrayinfo(receivemessage.message);
+                    for(int i = 0; i < removenickarray.Length; i++)
+                    {
+                        dBhelp.deletenickarray(rusernickname, removenickarray[i]);
+                    }
+                    sendmessage.command = Command.Removefriend;
+                    sendmessage.check = 1;
+                    sendclient.Add(new SocketData(socket, sendmessage));
+                    break;
+                case Command.Makechat:
+
+                    break;
             }
 
             return sendclient;
