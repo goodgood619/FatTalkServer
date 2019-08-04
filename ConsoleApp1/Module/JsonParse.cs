@@ -50,5 +50,23 @@ namespace ConsoleApp1.Module
             }
             return arrayvalue;
         }
+        public List<string> GetstringListvalue(string name)
+        {
+            List<string> list = new List<string>();
+            try
+            {
+                JsonArrayCollection jsonArrayCollection = (JsonArrayCollection)jsonObjectCollection[name];
+                int cnt = jsonArrayCollection.Count();
+                for(int i = 0; i < cnt; i++)
+                {
+                    list.Add(((JsonStringValue)jsonArrayCollection[i]).Value);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+            return list;
+        }
     }
 }

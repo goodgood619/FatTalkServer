@@ -190,14 +190,14 @@ namespace ConsoleApp1.Module
                 case Command.Makechat:
                     Dictionary<string, string> makechatnickname = jsonHelp.getnickinfo(receivemessage.message);
                     string musernickname = makechatnickname[JsonName.Nickname];
-                    string[] makenickarray = jsonHelp.getmakechatnickarrayinfo(receivemessage.message);
+                    List<string> makenickarray = jsonHelp.getmakechatnickarrayinfo(receivemessage.message);
                     // 0. 방개설 요청한 닉네임으로부터 현재 친구로 등록되어있는지를 확인
                     // 1. 요청한 닉네임, 요청당한 닉네임들이 모두 로그인되어있는지를 확인
                     // 2. chattinglist에서 같은 닉네임들로 형성된 방이 있는지를 체크
                     // 3. 채팅방 개설
                     string[] currentFriendlist = dBhelp.Refreshnickarray(musernickname);
                     bool notregistered = false;
-                    for(int i = 0; i < makenickarray.Length; i++)
+                    for(int i = 0; i < makenickarray.Count; i++)
                     {
                         bool check= currentFriendlist.Contains(makenickarray[i]);
                         if (!check)
@@ -216,7 +216,7 @@ namespace ConsoleApp1.Module
                     {
                         //1번을 체크(요청당한 닉네임들을 체크)
                         bool alllogin = true;
-                        for(int i = 0; i < makenickarray.Length; i++)
+                        for(int i = 0; i < makenickarray.Count; i++)
                         {
                             bool check = clientlist.Exists(x => x.id == makenickarray[i]);
                             if (!check)
@@ -233,18 +233,19 @@ namespace ConsoleApp1.Module
                         }
                         else
                         {
+                            makenickarray.Add(musernickname);
                             bool roompossible = false;
-                            int makenickcnt = makenickarray.Length;
+                            int makenickcnt = makenickarray.Count;
                             for(int i = 0; i < chattinglist.Count; i++)
                             {
-                                string[] currentroommembers = chattinglist[i].chatnickarray;
+                                List<string> currentroommembers = chattinglist[i].chatnickarray;
                                 int cnt = 0;
-                                for(int j = 0; j < currentroommembers.Length; j++)
+                                for(int j = 0; j < currentroommembers.Count; j++)
                                 {
                                     bool same = makenickarray.Contains(currentroommembers[j]);
                                     if (same) cnt++;
                                 }
-                                if (cnt == makenickcnt && currentroommembers.Length == makenickarray.Length)
+                                if (cnt == makenickcnt && currentroommembers.Count == makenickarray.Count)
                                 {
                                     roompossible = true;
                                     break;
@@ -259,13 +260,14 @@ namespace ConsoleApp1.Module
                             else //채팅방개설(초대된 닉네임을 매칭시켜서 걔네한테 뿌리면됨
                             {
                                 int newchatnumber = chattinglist.Count + 1;
+                                //makenickarray.Add(musernickname);
+
                                 chattinglist.Add(new Chattingdata(newchatnumber, makenickarray));
                                 sendmessage.command = Command.Makechat;
                                 sendmessage.Chatnumber = newchatnumber;
                                 sendmessage.check = 3;
-                                sendclient.Add(new SocketData(socket, sendmessage)); //주선자에게 송신
                                 List<Clientdata> tempsend = new List<Clientdata>();
-                                for(int i = 0; i<makenickarray.Length; i++)
+                                for(int i = 0; i<makenickarray.Count; i++)
                                 {
                                     string makeid = dBhelp.Getid(makenickarray[i]);
                                     Clientdata clientdata = clientlist.Find(x => x.id == makeid);
@@ -273,7 +275,7 @@ namespace ConsoleApp1.Module
                                 }
                                 for(int i = 0; i < tempsend.Count; i++)
                                 {
-                                    sendclient.Add(new SocketData(tempsend[i].socket, sendmessage)); //수신자에게 송신
+                                    sendclient.Add(new SocketData(tempsend[i].socket, sendmessage)); //수신자,(송신자도 포함) 송신
                                 }
                             }
                         }
@@ -285,13 +287,20 @@ namespace ConsoleApp1.Module
                     Dictionary<string, string> Message = jsonHelp.getmessageinfo(receivemessage.message);
                     string sendMessage = Message[JsonName.Message];
                     int sendchatnumber = receivemessage.Chatnumber;
-
-                    // 채팅방찾기 -> 보낼 정보들 가져오기
+                    sendmessage.command = Command.Sendchat;
+                    sendmessage.Chatnumber = receivemessage.Chatnumber;
+                    sendmessage.message = jsonHelp.Sendchatinfo(sendMessage);
+                    // 채팅방찾기 -> 보낼 정보들 가져오기->clientlist에서 찾기(socket정보, 그리고 sendmessage에 같이 담아서 보냄)
                     for(int i = 0; i < chattinglist.Count; i++)
                     {
                         if(sendchatnumber == chattinglist[i].chatnumber)
                         {
-
+                            List<string> sendchatnickarray = chattinglist[i].chatnickarray;
+                            for (int j = 0; j < sendchatnickarray.Count; j++) {
+                                string sendid = dBhelp.Getid(sendchatnickarray[j]);
+                                Clientdata c = clientlist.Find(x => x.id == sendid);
+                                if (c != null) sendclient.Add(new SocketData(c.socket,sendmessage));
+                            }
                             break;
                         }
                     }

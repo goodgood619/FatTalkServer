@@ -85,16 +85,22 @@ namespace ConsoleApp1.Module
             ret.Add(jsonArray);
             return ret.ToString();
         }
+        public string Sendchatinfo(string message)
+        {
+            JsonObjectCollection ret = new JsonObjectCollection();
+            ret.Add(new JsonStringValue(JsonName.Message, message));
+            return ret.ToString();
+        }
         public string[] getdeletenickarrayinfo(string data)
         {
             JsonParse jsonParse = new JsonParse(data);
             string[] s = jsonParse.GetstringArrayvalue("deletenickarray");
             return s;
         }
-        public string[] getmakechatnickarrayinfo(string data)
+        public List<string> getmakechatnickarrayinfo(string data)
         {
             JsonParse jsonParse = new JsonParse(data);
-            string[] s = jsonParse.GetstringArrayvalue("makechatarray");
+            List<string> s = jsonParse.GetstringListvalue("makechatarray");
             return s;
         }
     }

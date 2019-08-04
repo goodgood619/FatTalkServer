@@ -9,14 +9,14 @@ namespace ConsoleApp1.Models
     public class Chattingdata
     {
         public int chatnumber;
-        public string[] chatnickarray;
-        public Chattingdata(int chatnumber,string[] chatnickarray)
+        public List<string> chatnickarray;
+        public Chattingdata(int chatnumber,List<string> chatnickarray)
         {
             this.chatnumber = chatnumber;
-            this.chatnickarray = new string[chatnickarray.Length];
-            for(int i = 0; i < chatnickarray.Length; i++)
+            this.chatnickarray = new List<string>();
+            for(int i = 0; i < chatnickarray.Count; i++)
             {
-                this.chatnickarray[i] = chatnickarray[i];
+                this.chatnickarray.Add(chatnickarray[i]);
             }
         }
     }
