@@ -13,6 +13,7 @@ namespace ConsoleApp1.Models
         public string message { get; set; }
         public int Usernumber { get; set; }
         public int Friendcount { get; set; }
+        public int Chatnumber { get; set; }
         public TCPmessage()
         {
             command = Command.Null;
@@ -20,6 +21,7 @@ namespace ConsoleApp1.Models
             message = string.Empty;
             Usernumber = 0;
             Friendcount = 0;
+            Chatnumber = 0;
         }
 
         //1. command 2. check 3. melength, 4.message
@@ -29,10 +31,11 @@ namespace ConsoleApp1.Models
             check = BitConverter.ToInt32(data, 4);
             Usernumber = BitConverter.ToInt32(data, 8);
             Friendcount = BitConverter.ToInt32(data, 12);
-            int melength = BitConverter.ToInt32(data, 16);
+            Chatnumber = BitConverter.ToInt32(data, 16);
+            int melength = BitConverter.ToInt32(data, 20);
             if (melength > 0)
             {
-                message = Encoding.Unicode.GetString(data, 20, melength);
+                message = Encoding.Unicode.GetString(data, 24, melength);
             }
 
         }
@@ -44,6 +47,7 @@ namespace ConsoleApp1.Models
             bytedata.AddRange(BitConverter.GetBytes(check));
             bytedata.AddRange(BitConverter.GetBytes((int)Usernumber));
             bytedata.AddRange(BitConverter.GetBytes((int)Friendcount));
+            bytedata.AddRange(BitConverter.GetBytes((int)Chatnumber));
             bytedata.AddRange(BitConverter.GetBytes(Encoding.Unicode.GetByteCount(message)));
             bytedata.AddRange(Encoding.Unicode.GetBytes(message));
 

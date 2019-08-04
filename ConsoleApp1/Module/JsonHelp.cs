@@ -54,6 +54,13 @@ namespace ConsoleApp1.Module
             ret.Add(JsonName.Phone, jsonParse.GetstringValue(JsonName.Phone));
             return ret;
         }
+        public Dictionary<string,string> getmessageinfo(string data)
+        {
+            Dictionary<string, string> ret = new Dictionary<string, string>();
+            JsonParse jsonParse = new JsonParse(data);
+            ret.Add(JsonName.Message, jsonParse.GetstringValue(JsonName.Message));
+            return ret;
+        }
         public string logininfo(string id, string password)
         {
             JsonObjectCollection ret = new JsonObjectCollection();
@@ -84,6 +91,12 @@ namespace ConsoleApp1.Module
             string[] s = jsonParse.GetstringArrayvalue("deletenickarray");
             return s;
         }
+        public string[] getmakechatnickarrayinfo(string data)
+        {
+            JsonParse jsonParse = new JsonParse(data);
+            string[] s = jsonParse.GetstringArrayvalue("makechatarray");
+            return s;
+        }
     }
     public class JsonName
     {
@@ -93,5 +106,6 @@ namespace ConsoleApp1.Module
         public const string Nickname = "Nickname";
         public const string Phone = "Phone";
         public const string Usernumber = "Usernumber";
+        public const string Message = "Message";
     }
 }

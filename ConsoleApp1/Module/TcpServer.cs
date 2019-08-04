@@ -16,7 +16,7 @@ namespace ConsoleApp1.Module
         private Socket serversocket = null;
         private byte[] receivedata;
         private List<Socket> clist = new List<Socket>();
-        private int servertport=33212;
+        private int servertport=3300;
         public TcpServer()
         {
             receivedata = new byte[33200];

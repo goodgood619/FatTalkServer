@@ -10,17 +10,16 @@ namespace ConsoleApp1.Module
 {
     public class MessengerServer : TcpServer
     {
-        private const int serverport = 33212;
+        private const int serverport = 3300;
         private DBhelp dBhelp;
         private JsonHelp jsonHelp;
         public List<Clientdata> clientlist { get; set; }
-
+        public List<Chattingdata> chattinglist { get; set; }
         public MessengerServer()
         {
-            //this.jsonHelp = new JsonHelp();
             this.dBhelp = new DBhelp();
             this.clientlist = new List<Clientdata>();
-            //this.jsonHelp = new JsonHelp();
+            this.chattinglist = new List<Chattingdata>();
             Console.WriteLine($"Messenger Server Start : (Port: {serverport})");
         }
         public override List<SocketData> responseMessage(Socket socket, TCPmessage receivemessage)
@@ -189,7 +188,115 @@ namespace ConsoleApp1.Module
                     sendclient.Add(new SocketData(socket, sendmessage));
                     break;
                 case Command.Makechat:
+                    Dictionary<string, string> makechatnickname = jsonHelp.getnickinfo(receivemessage.message);
+                    string musernickname = makechatnickname[JsonName.Nickname];
+                    string[] makenickarray = jsonHelp.getmakechatnickarrayinfo(receivemessage.message);
+                    // 0. 방개설 요청한 닉네임으로부터 현재 친구로 등록되어있는지를 확인
+                    // 1. 요청한 닉네임, 요청당한 닉네임들이 모두 로그인되어있는지를 확인
+                    // 2. chattinglist에서 같은 닉네임들로 형성된 방이 있는지를 체크
+                    // 3. 채팅방 개설
+                    string[] currentFriendlist = dBhelp.Refreshnickarray(musernickname);
+                    bool notregistered = false;
+                    for(int i = 0; i < makenickarray.Length; i++)
+                    {
+                        bool check= currentFriendlist.Contains(makenickarray[i]);
+                        if (!check)
+                        {
+                            notregistered = true;
+                            break;
+                        }
+                    }
+                    if (notregistered) //0번의 경우로 채팅방 개설 실패
+                    {
+                        sendmessage.check = 0;
+                        sendmessage.command = Command.Makechat;
+                        sendclient.Add(new SocketData(socket, sendmessage));
+                    }
+                    else
+                    {
+                        //1번을 체크(요청당한 닉네임들을 체크)
+                        bool alllogin = true;
+                        for(int i = 0; i < makenickarray.Length; i++)
+                        {
+                            bool check = clientlist.Exists(x => x.id == makenickarray[i]);
+                            if (!check)
+                            {
+                                alllogin = false;
+                                break;
+                            }
+                        }
+                        if (!alllogin) // 모두가 들어오지않음
+                        {
+                            sendmessage.check = 1;
+                            sendmessage.command = Command.Makechat;
+                            sendclient.Add(new SocketData(socket, sendmessage));
+                        }
+                        else
+                        {
+                            bool roompossible = false;
+                            int makenickcnt = makenickarray.Length;
+                            for(int i = 0; i < chattinglist.Count; i++)
+                            {
+                                string[] currentroommembers = chattinglist[i].chatnickarray;
+                                int cnt = 0;
+                                for(int j = 0; j < currentroommembers.Length; j++)
+                                {
+                                    bool same = makenickarray.Contains(currentroommembers[j]);
+                                    if (same) cnt++;
+                                }
+                                if (cnt == makenickcnt && currentroommembers.Length == makenickarray.Length)
+                                {
+                                    roompossible = true;
+                                    break;
+                                }
+                            }
+                            if (roompossible) //동일한 채팅방존재
+                            {
+                                sendmessage.check = 2;
+                                sendmessage.command = Command.Makechat;
+                                sendclient.Add(new SocketData(socket, sendmessage));
+                            }
+                            else //채팅방개설(초대된 닉네임을 매칭시켜서 걔네한테 뿌리면됨
+                            {
+                                int newchatnumber = chattinglist.Count + 1;
+                                chattinglist.Add(new Chattingdata(newchatnumber, makenickarray));
+                                sendmessage.command = Command.Makechat;
+                                sendmessage.Chatnumber = newchatnumber;
+                                sendmessage.check = 3;
+                                sendclient.Add(new SocketData(socket, sendmessage)); //주선자에게 송신
+                                List<Clientdata> tempsend = new List<Clientdata>();
+                                for(int i = 0; i<makenickarray.Length; i++)
+                                {
+                                    string makeid = dBhelp.Getid(makenickarray[i]);
+                                    Clientdata clientdata = clientlist.Find(x => x.id == makeid);
+                                    tempsend.Add(clientdata);
+                                }
+                                for(int i = 0; i < tempsend.Count; i++)
+                                {
+                                    sendclient.Add(new SocketData(tempsend[i].socket, sendmessage)); //수신자에게 송신
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case Command.Sendchat:
+                    Dictionary<string, string> sendnick = jsonHelp.getnickinfo(receivemessage.message);
+                    string sendchatnickname = sendnick[JsonName.Nickname];
+                    Dictionary<string, string> Message = jsonHelp.getmessageinfo(receivemessage.message);
+                    string sendMessage = Message[JsonName.Message];
+                    int sendchatnumber = receivemessage.Chatnumber;
 
+                    // 채팅방찾기 -> 보낼 정보들 가져오기
+                    for(int i = 0; i < chattinglist.Count; i++)
+                    {
+                        if(sendchatnumber == chattinglist[i].chatnumber)
+                        {
+
+                            break;
+                        }
+                    }
+                    break;
+                case Command.Outchat:
                     break;
             }
 

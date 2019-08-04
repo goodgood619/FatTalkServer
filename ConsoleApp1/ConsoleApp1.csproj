@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\Chattingdata.cs" />
     <Compile Include="Models\Clientdata.cs" />
     <Compile Include="Models\SocketData.cs" />
     <Compile Include="Models\TCPmessage.cs" />
