@@ -87,6 +87,13 @@ namespace ConsoleApp1.Module
             return nickname;
 
         }
+        public string Getphone(string id)
+        {
+            string query = $"select Phone from test.member where ID='{id}'";
+            DataSet ret = dbconnect.selectquery(query);
+            string phone = Convert.ToString(ret.Tables[0].Rows[0]["Phone"]);
+            return phone;
+        }
         public int Getjoinusernumber()
         {
             string query = $"select * from test.member order by Usernumber";

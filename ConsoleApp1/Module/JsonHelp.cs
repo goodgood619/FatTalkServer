@@ -85,9 +85,10 @@ namespace ConsoleApp1.Module
             ret.Add(jsonArray);
             return ret.ToString();
         }
-        public string Sendchatinfo(string message)
+        public string Sendchatinfo(string message,string sendnickname)
         {
             JsonObjectCollection ret = new JsonObjectCollection();
+            ret.Add(new JsonStringValue(JsonName.Nickname, sendnickname));
             ret.Add(new JsonStringValue(JsonName.Message, message));
             return ret.ToString();
         }

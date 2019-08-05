@@ -124,7 +124,9 @@ namespace ConsoleApp1.Module
                 case Command.Findid:
                     Dictionary<string, string> findidinfo = jsonHelp.getidinfo(receivemessage.message);
                     string findid = findidinfo[JsonName.ID];
-                    if (dBhelp.IsexistID(findid))
+                    Dictionary<string, string> findphoneinfo = jsonHelp.getphoneinfo(receivemessage.message);
+                    string findphone = findphoneinfo[JsonName.Phone];
+                    if (dBhelp.IsexistID(findid) && dBhelp.Getphone(findid) == findphone)
                     {
                         string findpassword = dBhelp.Findpass(findid);
                         sendmessage.message = jsonHelp.logininfo(findid, findpassword);
@@ -287,9 +289,10 @@ namespace ConsoleApp1.Module
                     Dictionary<string, string> Message = jsonHelp.getmessageinfo(receivemessage.message);
                     string sendMessage = Message[JsonName.Message];
                     int sendchatnumber = receivemessage.Chatnumber;
+                    string sendmessageid = dBhelp.Getid(sendchatnickname); //보낸놈 아이디
                     sendmessage.command = Command.Sendchat;
                     sendmessage.Chatnumber = receivemessage.Chatnumber;
-                    sendmessage.message = jsonHelp.Sendchatinfo(sendMessage);
+                    sendmessage.message = jsonHelp.Sendchatinfo(sendMessage,sendchatnickname);
                     // 채팅방찾기 -> 보낼 정보들 가져오기->clientlist에서 찾기(socket정보, 그리고 sendmessage에 같이 담아서 보냄)
                     for(int i = 0; i < chattinglist.Count; i++)
                     {
@@ -299,13 +302,84 @@ namespace ConsoleApp1.Module
                             for (int j = 0; j < sendchatnickarray.Count; j++) {
                                 string sendid = dBhelp.Getid(sendchatnickarray[j]);
                                 Clientdata c = clientlist.Find(x => x.id == sendid);
-                                if (c != null) sendclient.Add(new SocketData(c.socket,sendmessage));
+                                if (c != null && sendid!=sendmessageid) sendclient.Add(new SocketData(c.socket,sendmessage));
                             }
                             break;
                         }
                     }
                     break;
                 case Command.Outchat:
+                    Dictionary<string, string> Outchatnickname = jsonHelp.getnickinfo(receivemessage.message);
+                    string outchatnickname = Outchatnickname[JsonName.Nickname];
+                    int chatnumber = receivemessage.Chatnumber;
+                    int oidx = -1;
+                    for(int i = 0; i < chattinglist.Count; i++)
+                    {
+                        if(chatnumber == chattinglist[i].chatnumber)
+                        {
+                            oidx = i;
+                            List<string> outchattinglist = chattinglist[i].chatnickarray;
+                            int idx = -1;
+                            for(int j = 0; j < outchattinglist.Count; j++)
+                            {
+                                if (outchatnickname == outchattinglist[j])
+                                {
+                                    idx = j;
+                                    break;
+                                }
+                            }
+                            outchattinglist.RemoveAt(idx);
+                            break;
+                        }
+                    }
+                    sendmessage.command = Command.Outchat;
+                    sendmessage.Chatnumber = chatnumber;
+                    for (int i = 0; i < chattinglist[oidx].chatnickarray.Count; i++)
+                    {
+                        string outsendid = chattinglist[oidx].chatnickarray[i];
+                        Clientdata outc = clientlist.Find(x => x.id == outsendid);
+                        if (outc != null) sendclient.Add(new SocketData(outc.socket, sendmessage));
+                    }
+        
+                    break;
+                case Command.Joinchat:
+                    Dictionary<string, string> Joinchatid = jsonHelp.getidinfo(receivemessage.message);
+                    string joinedchatid = Joinchatid[JsonName.ID]; //초대를 당한놈
+                    Dictionary<string, string> Joinchatnickname = jsonHelp.getnickinfo(receivemessage.message);
+                    string joinchatnickname = Joinchatnickname[JsonName.Nickname];
+                    string joinedchatnickname = dBhelp.Getnickname(joinedchatid);
+                    int joinchatnumber = receivemessage.Chatnumber;
+                    int jidx = -1;
+                    for(int i = 0; i < chattinglist.Count; i++)
+                    {
+                        if(joinchatnumber == chattinglist[i].chatnumber)
+                        {
+                            jidx = i;
+                            break;
+                        }
+                    }
+                    bool no = false;
+                    Clientdata joinedc = clientlist.Find(x => x.id == joinedchatid);
+                    if (joinedc == null) no = true;
+                    if (!no) //로그인이 되어있거나, 친구차단을안했거나(친구차단은 아직 구현안함)
+                    {
+                        TCPmessage joinsendmessage = new TCPmessage(); //초대받는 친구에게는 따로 command를 보내야함
+                        joinsendmessage.Chatnumber = joinchatnumber;
+                        joinsendmessage.command = Command.ReceiveJoinchat;
+                        joinsendmessage.check = 1;
+                        sendclient.Add(new SocketData(joinedc.socket,joinsendmessage));
+                        // 초대를 한 당사자는 초대ok된 메시지도 오는거고, 초대가 완료되었다는 메시지도 감
+                        sendmessage.command = Command.Joinchat;
+                        sendmessage.Chatnumber = joinchatnumber;
+                        sendmessage.check = 1; //만약 친구거부를 안했다면, 오케이(아직 자세하게는 예외처리 안함)
+                        for (int i = 0; i < chattinglist[jidx].chatnickarray.Count; i++) //기존에 있는방의 멤버들
+                        {
+                            string joinsendid = chattinglist[jidx].chatnickarray[i];
+                            Clientdata joinc = clientlist.Find(x => x.id == joinsendid);
+                            if (joinc != null) sendclient.Add(new SocketData(joinc.socket, sendmessage));
+                        }
+                        chattinglist[jidx].chatnickarray.Add(joinedchatnickname); //초대당한놈
+                    }
                     break;
             }
 
