@@ -99,7 +99,7 @@ namespace ConsoleApp1.Module
             string query = $"select * from test.member order by Usernumber";
             DataSet ret = dbconnect.selectquery(query);
             int usernumber = 1;
-
+            if (ret == null) return usernumber;
             foreach (DataRow data in ret.Tables[0].Rows)
             {
                 int num = Convert.ToInt32(data["Usernumber"]);
@@ -117,6 +117,7 @@ namespace ConsoleApp1.Module
             string query = $"select FriendId from test.friendlist where Id='{userid}'";
             DataSet ret = dbconnect.selectquery(query);
             bool no = false;
+            if (ret == null) return no;
             foreach (DataRow data in ret.Tables[0].Rows)
             {
                 string checkplusid = Convert.ToString(data["Friendid"]);
