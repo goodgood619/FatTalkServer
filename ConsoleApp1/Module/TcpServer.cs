@@ -43,7 +43,7 @@ namespace ConsoleApp1.Module
         {
             Socket client = serversocket.EndAccept(ar);
             clist.Add(client);
-            client.BeginReceive(receivedata, 0, receivedata.Length, 0, receive_callback, client);
+            client.BeginReceive(receivedata, 0, receivedata.Length,SocketFlags.None, receive_callback, client);
             serversocket.BeginAccept(accept_callback, null);
 
         }
@@ -59,10 +59,10 @@ namespace ConsoleApp1.Module
                 {
                     Socket socket = s.socket;
                     byte[] sendmessage = s.message;
-                    socket.BeginSend(sendmessage,0,sendmessage.Length,0,send_callback,socket);
+                    socket.BeginSend(sendmessage,0,sendmessage.Length,SocketFlags.None,send_callback,socket);
                 }
 
-                client.BeginReceive(receivedata, 0, receivedata.Length, 0, receive_callback, client);
+                client.BeginReceive(receivedata, 0, receivedata.Length,SocketFlags.None, receive_callback, client);
             }
             catch (Exception e)
             {

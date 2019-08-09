@@ -27,7 +27,10 @@ namespace ConsoleApp1.Module
         {
             try
             {
-                dbconnect.Open();
+                if (dbconnect.State != ConnectionState.Open)
+                {
+                    dbconnect.Open();
+                }
                 MySqlCommand command = new MySqlCommand(query, dbconnect);
                 command.ExecuteNonQuery(); //query가 눈에 호출되지않게 실행
             }
@@ -45,7 +48,10 @@ namespace ConsoleApp1.Module
             DataSet dataSet = new DataSet();
             try
             {
-                dbconnect.Open();
+                if (dbconnect.State != ConnectionState.Open)
+                {
+                    dbconnect.Open();
+                }
                 MySqlDataAdapter dataAdapter = new MySqlDataAdapter(s, dbconnect);
                 dataAdapter.Fill(dataSet);
             }
