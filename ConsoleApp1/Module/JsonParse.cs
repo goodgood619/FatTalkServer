@@ -55,11 +55,18 @@ namespace ConsoleApp1.Module
             List<string> list = new List<string>();
             try
             {
-                JsonArrayCollection jsonArrayCollection = (JsonArrayCollection)jsonObjectCollection[name];
+                var jsonArrayCollection = jsonObjectCollection[name] as JsonArrayCollection;
+
                 int cnt = jsonArrayCollection.Count();
                 for(int i = 0; i < cnt; i++)
                 {
-                    list.Add(((JsonStringValue)jsonArrayCollection[i]).Value);
+                    var aaa = jsonArrayCollection[i] as JsonStringValue;
+
+                    if (aaa != null)
+                    {
+                        list.Add(aaa.Value);
+                    }
+
                 }
             }
             catch (Exception e)
