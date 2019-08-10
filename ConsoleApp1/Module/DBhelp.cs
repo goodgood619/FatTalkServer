@@ -130,7 +130,40 @@ namespace ConsoleApp1.Module
             if (no) return false;
             else return true;
         }
-
+        public bool Blockplusfriend(string userid,string plusid) // 수정다시
+        {
+            string query = $"select Block from test.friendlist where Id='{plusid}' and Friendid='{userid}'";
+            DataSet ret = dbconnect.selectquery(query);
+            bool no = false;
+            foreach(DataRow data in ret.Tables[0].Rows)
+            {
+                int block = Convert.ToInt32(data["Block"]);
+                if (block == 1)
+                {
+                    no = true;
+                    break;
+                }
+            }
+            if (no) return true;
+            else return false;
+        }
+        public bool Blockmakechat(string usernickname, string joinchatnickname) //수정다시
+        {
+            string query = $"select Block from test.friendlist where Id='{joinchatnickname}' and Friendid='{usernickname}'";
+            DataSet ret = dbconnect.selectquery(query);
+            bool no = false;
+            foreach (DataRow data in ret.Tables[0].Rows)
+            {
+                int block = Convert.ToInt32(data["Block"]);
+                if (block == 1)
+                {
+                    no = true;
+                    break;
+                }
+            }
+            if (no) return true;
+            else return false;
+        }
         public int Refreshfriendcount(string usernickname)
         {
             string query = $"select * from test.friendlist where Nickname='{usernickname}'";
