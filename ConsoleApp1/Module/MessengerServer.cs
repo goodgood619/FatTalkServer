@@ -153,19 +153,26 @@ namespace ConsoleApp1.Module
                         }
                         else
                         {
-                            //친구를 추가하려는데, 그 친구가 차단을 한경우
+                            //친구를 추가하려는데, 그 친구가 차단을 한경우, 추가하려는데 이미 차단이 되어있는친구인경우
                             bool blockplusfriend = dBhelp.Isexistblock(dBhelp.Getnickname(plusid),dBhelp.Getnickname(userid));
-                            if (!blockplusfriend)
+                            bool blockplusfriend2 = dBhelp.Isexistblock(dBhelp.Getnickname(userid), dBhelp.Getnickname(plusid));
+                            if (!blockplusfriend && !blockplusfriend2) //나도 차단은 안했어야 함 
                             {
                                 string usernickname = dBhelp.Getnickname(userid);
                                 string plusnickname = dBhelp.Getnickname(plusid);
-                                dBhelp.plusfriend(userid, usernickname, plusid, plusnickname); //DB에 친구추가
+                                dBhelp.plusfriend(userid, usernickname, plusid, plusnickname,0); //DB에 친구추가
                                 sendmessage.message = jsonHelp.nickinfo(plusnickname);
                                 sendmessage.check = 1;
                             }
                             else
                             {
-                                sendmessage.check = 4; // 추가하려는 친구가 차단함
+                                string usernickname = dBhelp.Getnickname(userid);
+                                string plusnickname = dBhelp.Getnickname(plusid);
+                                if (blockplusfriend2) //본인이 차단한경우
+                                {
+                                    sendmessage.check = 5;
+                                }
+                                else sendmessage.check = 4; // 추가하려는 친구가 차단함
                    
                             }
                         }
@@ -178,6 +185,7 @@ namespace ConsoleApp1.Module
                     sendclient.Add(new SocketData(socket, sendmessage));
                     break;
                 case Command.Refresh:
+                    // 본인이 차단한 사람은 친구목록에서 뜨면 안된다.
                     Dictionary<string, string> refreshinfo = jsonHelp.getnickinfo(receivemessage.message);
                     string refreshnickname = refreshinfo[JsonName.Nickname];
                     int refreshcnt = dBhelp.Refreshfriendcount(refreshnickname); //nickname의 친구명수
@@ -208,7 +216,7 @@ namespace ConsoleApp1.Module
                     // 2. chattinglist에서 같은 닉네임들로 형성된 방이 있는지를 체크
                     // 3. 채팅방 개설
                     // 4. 초대한 친구들중 차단한 사람이 존재 하는지?
-                    // 5. 초대한 친구들중 내가 차단한 사람은 있는지(이거 아직 구현안함)
+                    // 5. 초대한 친구들중 내가 차단한 사람은 있는지(이거 아직 구현안함,안해도됨)
                     string[] currentFriendlist = dBhelp.Refreshnickarray(musernickname);
                     bool notregistered = false;
                     for(int i = 0; i < makenickarray.Count; i++)
@@ -399,7 +407,7 @@ namespace ConsoleApp1.Module
                     bool no = false;
                     Clientdata joinedc = clientlist.Find(x => x.id == joinedchatid);
                     if (joinedc == null) no = true;
-                    if (!no) //로그인이 되어있거나, 친구차단을안했거나(친구차단은 아직 구현안함)
+                    if (!no && !dBhelp.Isexistblock(joinedchatnickname,joinchatnickname) && !dBhelp.Isexistblock(joinchatnickname,joinedchatnickname)) //로그인이 되어있거나, 친구차단을안했거나
                     {
                         TCPmessage joinsendmessage = new TCPmessage(); //초대받는 친구에게는 따로 command를 보내야함
                         joinsendmessage.Chatnumber = joinchatnumber;
@@ -409,6 +417,7 @@ namespace ConsoleApp1.Module
                         // 초대를 한 당사자는 초대ok된 메시지도 오는거고, 초대가 완료되었다는 메시지도 감
                         sendmessage.command = Command.Joinchat;
                         sendmessage.Chatnumber = joinchatnumber;
+                        sendmessage.message = jsonHelp.nickinfo(joinedchatnickname);
                         sendmessage.check = 1; //만약 친구거부를 안했다면, 오케이(아직 자세하게는 예외처리 안함)
                         for (int i = 0; i < chattinglist[jidx].chatnickarray.Count; i++) //기존에 있는방의 멤버들
                         {
@@ -417,6 +426,12 @@ namespace ConsoleApp1.Module
                             if (joinc != null) sendclient.Add(new SocketData(joinc.socket, sendmessage));
                         }
                         chattinglist[jidx].chatnickarray.Add(joinedchatnickname); //초대당한놈
+                    }
+                    else
+                    {
+                        sendmessage.command = Command.Joinchat;
+                        sendmessage.check = 0;
+                             
                     }
                     break;
 
@@ -429,20 +444,29 @@ namespace ConsoleApp1.Module
                     if (!blockcheck)
                     {
                         sendmessage.check = 0;
+                        sendmessage.command = Command.Blockfriend;
                     }
                     else if (blockcheck && blockedid == dBhelp.Getid(blockingnickname)) //일치하는경우
                     {
                         sendmessage.check = 2;
+                        sendmessage.command = Command.Blockfriend;
                     }
                     else if (dBhelp.Isexistblock(blockingnickname, dBhelp.Getnickname(blockedid))) //이미 기록이 있는경우
                     {
                         sendmessage.check = 3;
+                        sendmessage.command = Command.Blockfriend;
                     }
                     else
-                    {
+                    { 
+                        
                         sendmessage.check = 1;
+                        sendmessage.command = Command.Blockfriend;
                         sendmessage.message = jsonHelp.nickinfo(dBhelp.Getnickname(blockedid));
                         dBhelp.Blockfriend(blockingnickname, dBhelp.Getnickname(blockedid));
+                        if(dBhelp.Isexistfriend(blockingnickname, dBhelp.Getnickname(blockedid)))//만약 친구목록이 존재한다면 update로 block을 1로 변경
+                        {
+                            dBhelp.Updateblock(blockingnickname, dBhelp.Getnickname(blockedid)); //update
+                        }
                     }
                     sendclient.Add(new SocketData(socket,sendmessage));
                     break;
@@ -456,19 +480,35 @@ namespace ConsoleApp1.Module
                     if (!notblockcheck)
                     {
                         sendmessage.check = 0;
+                        sendmessage.command = Command.NotBlockfriend;
                     }
                     else if (notblockcheck && notblockedid == dBhelp.Getid(notblockingnickname)) //일치하는경우
                     {
+                       
                         sendmessage.check = 2;
+                        sendmessage.command = Command.NotBlockfriend;
                     }
                     else if (!dBhelp.Isexistblock(notblockingnickname, dBhelp.Getnickname(notblockedid))) //이미 해제가 되어있는경우
                     {
                         sendmessage.check = 3;
+                        sendmessage.command = Command.NotBlockfriend;
                     }
                     else
                     {
-                        sendmessage.check = 1;
-                        dBhelp.deleteBlockfriend(notblockingnickname, dBhelp.Getnickname(notblockedid)); //차단해제
+                        if (!dBhelp.Isexistblockfriend(notblockingnickname, dBhelp.Getnickname(notblockedid))) //친구목록이 없는경우
+                        {
+                            sendmessage.check = 1;
+                            dBhelp.deleteBlockfriend(notblockingnickname, dBhelp.Getnickname(notblockedid)); //차단해제
+                            sendmessage.command = Command.NotBlockfriend;
+                        }
+                        else //친구목록이 있는 경우, test.friendlist에서 복구를 해야함
+                        {
+                            sendmessage.check = 4;
+                            dBhelp.deleteBlockfriend(notblockingnickname, dBhelp.Getnickname(notblockedid)); //차단해제
+                            dBhelp.Updatenotblock(notblockingnickname, dBhelp.Getnickname(notblockedid)); //Block해제
+                            sendmessage.message = jsonHelp.nickinfo(dBhelp.Getnickname(notblockedid));
+                            sendmessage.command = Command.NotBlockfriend;
+                        }
                     }
                     sendclient.Add(new SocketData(socket, sendmessage));
 

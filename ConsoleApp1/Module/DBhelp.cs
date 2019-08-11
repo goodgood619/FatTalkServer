@@ -38,7 +38,18 @@ namespace ConsoleApp1.Module
             string query = $"select * from test.Blockfriendlist where Nickname='{blockingnickname}' and Blockednickname='{blockednickname}'";
             bool result = dbconnect.IsexistRow(query);
             return result;
-
+        }
+        public bool Isexistblockfriend(string blockingnickname,string blockednickname)
+        {
+            string query = $"select * from test.friendlist where Nickname='{blockingnickname}' and Friendnickname='{blockednickname}' and Block=1";
+            bool result = dbconnect.IsexistRow(query);
+            return result;
+        }
+        public bool Isexistfriend(string usernickname,string friendnickname)
+        {
+            string query = $"select * from test.friendlist where Nickname='{usernickname}' and Friendnickname = '{friendnickname}'";
+            bool result = dbconnect.IsexistRow(query);
+            return result;
         }
         public bool validLogin(string id, string password)
         {
@@ -52,14 +63,24 @@ namespace ConsoleApp1.Module
             string query = $"insert into test.member values ('{id}','{password}','{nickname}','{phone}','{usernumber}')";
             dbconnect.sendquery(query);
         }
-        public void plusfriend(string id, string usernickname, string friendid, string friendnickname)
+        public void plusfriend(string id, string usernickname, string friendid, string friendnickname,int block)
         {
-            string query = $"insert into test.friendlist values ('{id}','{usernickname}','{friendid}','{friendnickname}')";
+            string query = $"insert into test.friendlist values ('{id}','{usernickname}','{friendid}','{friendnickname}','{block}')";
             dbconnect.sendquery(query);
         }
         public void Blockfriend(string blockingnickname,string blockednickname)
         {
             string query = $"insert into test.Blockfriendlist values ('{blockingnickname}','{blockednickname}')";
+            dbconnect.sendquery(query);
+        }
+        public void Updatenotblock(string blockingnickname,string blockednickname)
+        {
+            string query = $"update test.friendlist set Block = 0 where Nickname='{blockingnickname}' and Friendnickname='{blockednickname}'";
+            dbconnect.sendquery(query);
+        }
+        public void Updateblock(string blockingnickname,string blockednickname)
+        {
+            string query = $"update test.friendlist set Block = 1 where Nickname='{blockingnickname}' and Friendnickname = '{blockednickname}'";
             dbconnect.sendquery(query);
         }
         public string Findpass(string id)
@@ -178,22 +199,26 @@ namespace ConsoleApp1.Module
         }
         public int Refreshfriendcount(string usernickname)
         {
-            string query = $"select * from test.friendlist where Nickname='{usernickname}'";
+            string query = $"select * from test.friendlist where Nickname='{usernickname}' and Block= 0";
             DataSet ret = dbconnect.selectquery(query);
             int cnt = ret.Tables[0].Rows.Count;
             return cnt;
         }
         public string[] Refreshnickarray(string usernickname)
         {
-            string query = $"select Friendnickname from test.friendlist where Nickname='{usernickname}'";
+            string query = $"select Friendnickname,Block from test.friendlist where Nickname='{usernickname}'";
             DataSet ret = dbconnect.selectquery(query);
             string[] s = new string[ret.Tables[0].Rows.Count];
             int idx = 0;
             foreach(DataRow data in ret.Tables[0].Rows)
             {
                 string temp = Convert.ToString(data["Friendnickname"]);
-                s[idx] = temp;
-                idx++;
+                int block = Convert.ToInt32(data["Block"]);
+                if (block == 0)
+                {
+                    s[idx] = temp;
+                    idx++;
+                }
             }
             return s;
         }
