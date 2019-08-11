@@ -33,6 +33,13 @@ namespace ConsoleApp1.Module
             bool result = dbconnect.IsexistRow(query);
             return result;
         }
+        public bool Isexistblock(string blockingnickname,string blockednickname)
+        {
+            string query = $"select * from test.Blockfriendlist where Nickname='{blockingnickname}' and Blockednickname='{blockednickname}'";
+            bool result = dbconnect.IsexistRow(query);
+            return result;
+
+        }
         public bool validLogin(string id, string password)
         {
             string query = $"select * from test.member where ID='{id}' and Password='{password}'";
@@ -48,6 +55,11 @@ namespace ConsoleApp1.Module
         public void plusfriend(string id, string usernickname, string friendid, string friendnickname)
         {
             string query = $"insert into test.friendlist values ('{id}','{usernickname}','{friendid}','{friendnickname}')";
+            dbconnect.sendquery(query);
+        }
+        public void Blockfriend(string blockingnickname,string blockednickname)
+        {
+            string query = $"insert into test.Blockfriendlist values ('{blockingnickname}','{blockednickname}')";
             dbconnect.sendquery(query);
         }
         public string Findpass(string id)
@@ -188,6 +200,11 @@ namespace ConsoleApp1.Module
         public void deletenickarray(string usernickname,string deletenickname)
         {
             string query = $"delete from test.friendlist where Friendnickname='{deletenickname}' and Nickname='{usernickname}'";
+            dbconnect.sendquery(query);
+        }
+        public void deleteBlockfriend(string blockingnickname,string blockednickname)
+        {
+            string query = $"delete from test.Blockfriendlist where Nickname='{blockingnickname}' and Blockednickname='{blockednickname}'";
             dbconnect.sendquery(query);
         }
     }

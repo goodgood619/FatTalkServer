@@ -154,7 +154,7 @@ namespace ConsoleApp1.Module
                         else
                         {
                             //친구를 추가하려는데, 그 친구가 차단을 한경우
-                            bool blockplusfriend = dBhelp.Blockplusfriend(userid, plusid);
+                            bool blockplusfriend = dBhelp.Isexistblock(dBhelp.Getnickname(plusid),dBhelp.Getnickname(userid));
                             if (!blockplusfriend)
                             {
                                 string usernickname = dBhelp.Getnickname(userid);
@@ -208,6 +208,7 @@ namespace ConsoleApp1.Module
                     // 2. chattinglist에서 같은 닉네임들로 형성된 방이 있는지를 체크
                     // 3. 채팅방 개설
                     // 4. 초대한 친구들중 차단한 사람이 존재 하는지?
+                    // 5. 초대한 친구들중 내가 차단한 사람은 있는지(이거 아직 구현안함)
                     string[] currentFriendlist = dBhelp.Refreshnickarray(musernickname);
                     bool notregistered = false;
                     for(int i = 0; i < makenickarray.Count; i++)
@@ -273,7 +274,7 @@ namespace ConsoleApp1.Module
                             else{ //초대한 사람중에 차단한 사람이 존재하는지 -> 이거 그냥 Blockfriendlist쓰면됨(수정다시)
                                 bool nochatMake = false;
                                 for (int i = 0; i < currentFriendlist.Length; i++) {
-                                    bool blockMakechatcheck = dBhelp.Blockmakechat(musernickname, currentFriendlist[i]);
+                                    bool blockMakechatcheck = dBhelp.Isexistblock(currentFriendlist[i],musernickname);
                                     if(blockMakechatcheck == true)
                                     {
                                         nochatMake = true;
@@ -420,6 +421,56 @@ namespace ConsoleApp1.Module
                     break;
 
                 case Command.Blockfriend: //그냥 DB(test.Blockfriendlist쓰자), 왜냐하면 친구가 구지 아니어도 친구차단을 할수도있으니
+                    Dictionary<string, string> Blockedid = jsonHelp.getidinfo(receivemessage.message);
+                    Dictionary<string, string> Blockingnickname = jsonHelp.getnickinfo(receivemessage.message);
+                    string blockedid = Blockedid[JsonName.ID];
+                    string blockingnickname = Blockingnickname[JsonName.Nickname];
+                    bool blockcheck = dBhelp.IsexistID(blockedid);
+                    if (!blockcheck)
+                    {
+                        sendmessage.check = 0;
+                    }
+                    else if (blockcheck && blockedid == dBhelp.Getid(blockingnickname)) //일치하는경우
+                    {
+                        sendmessage.check = 2;
+                    }
+                    else if (dBhelp.Isexistblock(blockingnickname, dBhelp.Getnickname(blockedid))) //이미 기록이 있는경우
+                    {
+                        sendmessage.check = 3;
+                    }
+                    else
+                    {
+                        sendmessage.check = 1;
+                        sendmessage.message = jsonHelp.nickinfo(dBhelp.Getnickname(blockedid));
+                        dBhelp.Blockfriend(blockingnickname, dBhelp.Getnickname(blockedid));
+                    }
+                    sendclient.Add(new SocketData(socket,sendmessage));
+                    break;
+
+                case Command.NotBlockfriend:
+                    Dictionary<string, string> NotBlockedid = jsonHelp.getidinfo(receivemessage.message);
+                    Dictionary<string, string> NotBlockingnickname = jsonHelp.getnickinfo(receivemessage.message);
+                    string notblockedid = NotBlockedid[JsonName.ID];
+                    string notblockingnickname = NotBlockingnickname[JsonName.Nickname];
+                    bool notblockcheck = dBhelp.IsexistID(notblockedid);
+                    if (!notblockcheck)
+                    {
+                        sendmessage.check = 0;
+                    }
+                    else if (notblockcheck && notblockedid == dBhelp.Getid(notblockingnickname)) //일치하는경우
+                    {
+                        sendmessage.check = 2;
+                    }
+                    else if (!dBhelp.Isexistblock(notblockingnickname, dBhelp.Getnickname(notblockedid))) //이미 해제가 되어있는경우
+                    {
+                        sendmessage.check = 3;
+                    }
+                    else
+                    {
+                        sendmessage.check = 1;
+                        dBhelp.deleteBlockfriend(notblockingnickname, dBhelp.Getnickname(notblockedid)); //차단해제
+                    }
+                    sendclient.Add(new SocketData(socket, sendmessage));
 
                     break;
             }
