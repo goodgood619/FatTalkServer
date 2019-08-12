@@ -61,8 +61,10 @@ namespace ConsoleApp1.Module
                     byte[] sendmessage = s.message;
                     socket.BeginSend(sendmessage,0,sendmessage.Length,SocketFlags.None,send_callback,socket);
                 }
-
-                client.BeginReceive(receivedata, 0, receivedata.Length,SocketFlags.None, receive_callback, client);
+                if (client.Connected)
+                {
+                    client.BeginReceive(receivedata, 0, receivedata.Length, SocketFlags.None, receive_callback, client);
+                }
             }
             catch (Exception e)
             {

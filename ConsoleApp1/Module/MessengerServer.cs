@@ -392,46 +392,82 @@ namespace ConsoleApp1.Module
                     Dictionary<string, string> Joinchatid = jsonHelp.getidinfo(receivemessage.message);
                     string joinedchatid = Joinchatid[JsonName.ID]; //초대를 당한놈
                     Dictionary<string, string> Joinchatnickname = jsonHelp.getnickinfo(receivemessage.message);
-                    string joinchatnickname = Joinchatnickname[JsonName.Nickname];
-                    string joinedchatnickname = dBhelp.Getnickname(joinedchatid);
+                    string joinchatnickname = Joinchatnickname[JsonName.Nickname]; //초대를 하는 사람
                     int joinchatnumber = receivemessage.Chatnumber;
                     int jidx = -1;
-                    for(int i = 0; i < chattinglist.Count; i++)
+                    Clientdata JoinData = clientlist.Find(x => x.id == joinedchatid);
+                    if (JoinData == null) //초대할놈이 로그아웃됨
                     {
-                        if(joinchatnumber == chattinglist[i].chatnumber)
-                        {
-                            jidx = i;
-                            break;
-                        }
-                    }
-                    bool no = false;
-                    Clientdata joinedc = clientlist.Find(x => x.id == joinedchatid);
-                    if (joinedc == null) no = true;
-                    if (!no && !dBhelp.Isexistblock(joinedchatnickname,joinchatnickname) && !dBhelp.Isexistblock(joinchatnickname,joinedchatnickname)) //로그인이 되어있거나, 친구차단을안했거나
-                    {
-                        TCPmessage joinsendmessage = new TCPmessage(); //초대받는 친구에게는 따로 command를 보내야함
-                        joinsendmessage.Chatnumber = joinchatnumber;
-                        joinsendmessage.command = Command.ReceiveJoinchat;
-                        joinsendmessage.check = 1;
-                        sendclient.Add(new SocketData(joinedc.socket,joinsendmessage));
-                        // 초대를 한 당사자는 초대ok된 메시지도 오는거고, 초대가 완료되었다는 메시지도 감
+                        sendmessage.check = 0;
                         sendmessage.command = Command.Joinchat;
-                        sendmessage.Chatnumber = joinchatnumber;
-                        sendmessage.message = jsonHelp.nickinfo(joinedchatnickname);
-                        sendmessage.check = 1; //만약 친구거부를 안했다면, 오케이(아직 자세하게는 예외처리 안함)
-                        for (int i = 0; i < chattinglist[jidx].chatnickarray.Count; i++) //기존에 있는방의 멤버들
-                        {
-                            string joinsendid = chattinglist[jidx].chatnickarray[i];
-                            Clientdata joinc = clientlist.Find(x => x.id == joinsendid);
-                            if (joinc != null) sendclient.Add(new SocketData(joinc.socket, sendmessage));
-                        }
-                        chattinglist[jidx].chatnickarray.Add(joinedchatnickname); //초대당한놈
+                        sendclient.Add(new SocketData(socket, sendmessage));
+                    }
+                    else if (!dBhelp.IsexistID(joinedchatid)) //아이디가 존재하는지
+                    {
+                        sendmessage.check = 2;
+                        sendmessage.command = Command.Joinchat;
+                        sendclient.Add(new SocketData(socket, sendmessage));
+                    }
+                    else if (joinedchatid == dBhelp.Getid(joinchatnickname)) //초대하려는 사람과 초대당하는 사람이 일치하는지
+                    {
+                        sendmessage.check = 3;
+                        sendmessage.command = Command.Joinchat;
+                        sendclient.Add(new SocketData(socket, sendmessage));
                     }
                     else
                     {
-                        sendmessage.command = Command.Joinchat;
-                        sendmessage.check = 0;
-                             
+                        bool joinno = false;
+                        for (int i = 0; i < chattinglist.Count; i++)
+                        {
+                            if (joinchatnumber == chattinglist[i].chatnumber)
+                            {
+                                jidx = i;
+                                for (int j = 0; j < chattinglist[i].chatnickarray.Count; j++)
+                                {
+                                    if (chattinglist[i].chatnickarray[j] == dBhelp.Getnickname(joinedchatid))
+                                    {
+                                        joinno = true;
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        if (joinno)
+                        {
+                            sendmessage.check = 4;
+                            sendmessage.command = Command.Joinchat;
+                            sendclient.Add(new SocketData(socket, sendmessage));
+                        }
+                        else
+                        {
+                            if (!dBhelp.Isexistblock(dBhelp.Getnickname(joinedchatid), joinchatnickname) && !dBhelp.Isexistblock(joinchatnickname, dBhelp.Getnickname(joinedchatid))) //로그인이 되어있거나, 친구차단을안했거나
+                            {
+                                TCPmessage joinsendmessage = new TCPmessage(); //초대받는 친구에게는 따로 command를 보내야함
+                                joinsendmessage.Chatnumber = joinchatnumber;
+                                joinsendmessage.command = Command.ReceiveJoinchat;
+                                joinsendmessage.check = 1;
+                                sendclient.Add(new SocketData(JoinData.socket, joinsendmessage));
+                                // 초대를 한 당사자는 초대ok된 메시지도 오는거고, 초대가 완료되었다는 메시지도 감
+                                sendmessage.command = Command.Joinchat;
+                                sendmessage.Chatnumber = joinchatnumber;
+                                sendmessage.message = jsonHelp.nickinfo(dBhelp.Getnickname(joinedchatid));
+                                sendmessage.check = 1; //만약 친구거부를 안했다면, 오케이(아직 자세하게는 예외처리 안함)
+                                for (int i = 0; i < chattinglist[jidx].chatnickarray.Count; i++) //기존에 있는방의 멤버들
+                                {
+                                    string joinsendid = chattinglist[jidx].chatnickarray[i];
+                                    Clientdata joinc = clientlist.Find(x => x.id == joinsendid);
+                                    if (joinc != null) sendclient.Add(new SocketData(joinc.socket, sendmessage));
+                                }
+                                chattinglist[jidx].chatnickarray.Add(dBhelp.Getnickname(joinedchatid)); //초대당한놈
+                            }
+                            else
+                            {
+                                sendmessage.check = 5;
+                                sendmessage.command = Command.Joinchat;
+                                sendclient.Add(new SocketData(socket, sendmessage));
+                            }
+                        }
                     }
                     break;
 
