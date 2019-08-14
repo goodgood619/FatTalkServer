@@ -371,7 +371,7 @@ namespace ConsoleApp1.Module
                                     break;
                                 }
                             }
-                            chattinglist[oidx].chatnickarray.RemoveAt(idx);
+                            if(idx!=-1) chattinglist[oidx].chatnickarray.RemoveAt(idx);
                             break;
                         }
                     }
