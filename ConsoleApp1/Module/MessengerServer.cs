@@ -39,7 +39,6 @@ namespace ConsoleApp1.Module
                     bool passcheck = dBhelp.IsExistPassword(password);
                     bool validlogin = dBhelp.validLogin(id, password);
 
-
                     if (!idcheck && !validlogin) sendmessage.check = 0;
                     if (!passcheck && !validlogin) sendmessage.check = 1;
                     if (validlogin)
@@ -115,11 +114,12 @@ namespace ConsoleApp1.Module
                     break;
                 case Command.logout:
                     Dictionary<string, string> logoutinfo = jsonHelp.getnickinfo(receivemessage.message);
-                    string logoutid = dBhelp.Getid(logoutinfo[JsonName.Nickname]);
+                    string logoutnickname = logoutinfo[JsonName.Nickname];
+                    string logoutid = dBhelp.Getid(logoutnickname);
                     Clientdata LogoutData = clientlist.Find(x => (x.id == logoutid));
-                    clientlist.Remove(LogoutData);
                     sendmessage.command = Command.logout;
                     sendclient.Add(new SocketData(socket, sendmessage));
+                    clientlist.Remove(LogoutData);
                     break;
                 case Command.Findid:
                     Dictionary<string, string> findidinfo = jsonHelp.getidinfo(receivemessage.message);
@@ -396,7 +396,14 @@ namespace ConsoleApp1.Module
                     int joinchatnumber = receivemessage.Chatnumber;
                     int jidx = -1;
                     Clientdata JoinData = clientlist.Find(x => x.id == joinedchatid);
-                    if (JoinData == null) //초대할놈이 로그아웃됨
+                    Clientdata checkJoindata = clientlist.Find(x => x.id == dBhelp.Getid(joinchatnickname));
+                    if (checkJoindata == null) //초대한놈이 로그아웃됨
+                    {
+                        sendmessage.check = 6;
+                        sendmessage.command = Command.Joinchat;
+                        sendclient.Add(new SocketData(socket, sendmessage));
+                    }
+                    else if (JoinData == null) //초대당한놈이 로그아웃됨
                     {
                         sendmessage.check = 0;
                         sendmessage.command = Command.Joinchat;
@@ -548,6 +555,48 @@ namespace ConsoleApp1.Module
                     }
                     sendclient.Add(new SocketData(socket, sendmessage));
 
+                    break;
+                case Command.Refreshchatnickarray:
+                    Dictionary<string, string> Refreshchatnickname = jsonHelp.getnickinfo(receivemessage.message);
+                    string refreshchatnickname = Refreshchatnickname[JsonName.Nickname];
+                    int refreshchatnumber = receivemessage.Chatnumber;
+                    sendmessage.command = Command.Refreshchatnickarray;
+                    List<string> refreshchatlist = new List<string>();
+                    for(int i = 0; i < chattinglist.Count; i++)
+                    {
+                        if(chattinglist[i].chatnumber == refreshchatnumber)
+                        {
+                            for(int j = 0; j < chattinglist[i].chatnickarray.Count; j++)
+                            {
+                                if (refreshchatnickname == chattinglist[i].chatnickarray[j]) continue;
+                                else refreshchatlist.Add(chattinglist[i].chatnickarray[j]);
+                            }
+                        }
+                    }
+                    sendmessage.message = jsonHelp.Refreshchatnickarrayinfo(refreshchatlist);
+                    sendmessage.Chatnumber = refreshchatnumber;
+                    sendclient.Add(new SocketData(socket,sendmessage));
+                    break;
+                case Command.Changeroomname:
+                    Dictionary<string, string> ChangeRoomname = jsonHelp.getchangeroomnameinfo(receivemessage.message);
+                    Dictionary<string, string> Checkoutnickname = jsonHelp.getnickinfo(receivemessage.message); 
+                    string changeroomname = ChangeRoomname[JsonName.Roomname];
+                    string checkoutnickname = Checkoutnickname[JsonName.Nickname];
+                    int changeroomnumber = receivemessage.Chatnumber;
+                    if (clientlist.Exists(x => x.id == dBhelp.Getid(checkoutnickname)))
+                    {
+                        sendmessage.command = Command.Changeroomname;
+                        sendmessage.message = jsonHelp.roomnameinfo(changeroomname);
+                        sendmessage.Chatnumber = changeroomnumber;
+                        sendmessage.check = 1;
+                        sendclient.Add(new SocketData(socket, sendmessage));
+                    }
+                    else
+                    {
+                        sendmessage.command = Command.Changeroomname;
+                        sendmessage.check = 0;
+                        sendclient.Add(new SocketData(socket, sendmessage));
+                    }
                     break;
             }
 

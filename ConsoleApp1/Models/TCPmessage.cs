@@ -65,6 +65,7 @@ namespace ConsoleApp1.Models
         Sendchat,
         Nicknamecheck,
         ReceiveJoinchat,
-        Blockfriend, NotBlockfriend
+        Blockfriend, NotBlockfriend, Refreshchatnickarray, Changeroomname
+
     }
 }

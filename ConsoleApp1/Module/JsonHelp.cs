@@ -61,6 +61,13 @@ namespace ConsoleApp1.Module
             ret.Add(JsonName.Message, jsonParse.GetstringValue(JsonName.Message));
             return ret;
         }
+        public Dictionary<string,string> getchangeroomnameinfo(string data)
+        {
+            Dictionary<string, string> ret = new Dictionary<string, string>();
+            JsonParse jsonParse = new JsonParse(data);
+            ret.Add(JsonName.Roomname, jsonParse.GetstringValue(JsonName.Roomname));
+            return ret;
+        }
         public string logininfo(string id, string password)
         {
             JsonObjectCollection ret = new JsonObjectCollection();
@@ -74,6 +81,12 @@ namespace ConsoleApp1.Module
             ret.Add(new JsonStringValue(JsonName.Nickname, nickname));
             return ret.ToString();
         }
+        public string roomnameinfo(string roomname)
+        {
+            JsonObjectCollection ret = new JsonObjectCollection();
+            ret.Add(new JsonStringValue(JsonName.Roomname, roomname));
+            return ret.ToString();
+        }
         public string Refreshnickarrayinfo(string[] fnickarray)
         {
             JsonObjectCollection ret = new JsonObjectCollection();
@@ -81,6 +94,17 @@ namespace ConsoleApp1.Module
             for(int i = 0; i <fnickarray.Length; i++)
             {
                 jsonArray.Add(new JsonStringValue(null, fnickarray[i]));
+            }
+            ret.Add(jsonArray);
+            return ret.ToString();
+        }
+        public string Refreshchatnickarrayinfo(List<string> chatnickarray)
+        {
+            JsonObjectCollection ret = new JsonObjectCollection();
+            JsonArrayCollection jsonArray = new JsonArrayCollection("refreshchatnickarray");
+            for(int i = 0; i < chatnickarray.Count; i++)
+            {
+                jsonArray.Add(new JsonStringValue(null, chatnickarray[i]));
             }
             ret.Add(jsonArray);
             return ret.ToString();
@@ -114,5 +138,6 @@ namespace ConsoleApp1.Module
         public const string Phone = "Phone";
         public const string Usernumber = "Usernumber";
         public const string Message = "Message";
+        public const string Roomname = "Roomname";
     }
 }
