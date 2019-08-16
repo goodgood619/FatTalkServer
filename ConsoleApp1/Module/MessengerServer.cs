@@ -115,11 +115,14 @@ namespace ConsoleApp1.Module
                 case Command.logout:
                     Dictionary<string, string> logoutinfo = jsonHelp.getnickinfo(receivemessage.message);
                     string logoutnickname = logoutinfo[JsonName.Nickname];
-                    string logoutid = dBhelp.Getid(logoutnickname);
-                    Clientdata LogoutData = clientlist.Find(x => (x.id == logoutid));
-                    sendmessage.command = Command.logout;
-                    sendclient.Add(new SocketData(socket, sendmessage));
-                    clientlist.Remove(LogoutData);
+                    if (logoutnickname != string.Empty)
+                    {
+                        string logoutid = dBhelp.Getid(logoutnickname);
+                        Clientdata LogoutData = clientlist.Find(x => (x.id == logoutid));
+                        sendmessage.command = Command.logout;
+                        sendclient.Add(new SocketData(socket, sendmessage));
+                        clientlist.Remove(LogoutData);
+                    }
                     break;
                 case Command.Findid:
                     Dictionary<string, string> findidinfo = jsonHelp.getidinfo(receivemessage.message);
