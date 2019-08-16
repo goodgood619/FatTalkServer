@@ -356,7 +356,7 @@ namespace ConsoleApp1.Module
                     outsendmessage.Chatnumber = chatnumber;
                     outsendmessage.command = Command.Outchat;
                     Clientdata clientdata = clientlist.Find(x => x.id == outchatid);
-                    sendclient.Add(new SocketData(clientdata.socket,outsendmessage));
+                    if(clientdata!= null) sendclient.Add(new SocketData(clientdata.socket,outsendmessage));
                     for (int i = 0; i < chattinglist.Count; i++)
                     {
                         if(chatnumber == chattinglist[i].chatnumber) //방번호찾기
@@ -571,6 +571,7 @@ namespace ConsoleApp1.Module
                                 if (refreshchatnickname == chattinglist[i].chatnickarray[j]) continue;
                                 else refreshchatlist.Add(chattinglist[i].chatnickarray[j]);
                             }
+                            break;
                         }
                     }
                     sendmessage.message = jsonHelp.Refreshchatnickarrayinfo(refreshchatlist);
