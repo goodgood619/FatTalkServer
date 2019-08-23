@@ -15,11 +15,17 @@ namespace ConsoleApp1.Module
         private JsonHelp jsonHelp;
         public List<Clientdata> clientlist { get; set; }
         public List<Chattingdata> chattinglist { get; set; }
+        private readonly object clientlistinlock; //로그인관련 lock
+        private readonly object clientlistoutlock; //로그아웃관련 lock
+        private readonly object chattinglistlock; //채팅창관련 lock
         public MessengerServer()
         {
             this.dBhelp = new DBhelp();
             this.clientlist = new List<Clientdata>();
             this.chattinglist = new List<Chattingdata>();
+            clientlistinlock = new object();
+            clientlistoutlock = new object();
+            chattinglistlock = new object();
             Console.WriteLine($"Messenger Server Start : (Port: {serverport})");
         }
         public override List<SocketData> responseMessage(Socket socket, TCPmessage receivemessage)
@@ -58,12 +64,15 @@ namespace ConsoleApp1.Module
                         }
                         else
                         {
-                            clientlist.Add(new Clientdata(socket, id)); //서버에 login을 했으니 정보를 추가해줘야함
-                            int usernumber = dBhelp.Getusernumber(id);
-                            string nickname = dBhelp.Getnickname(usernumber);
-                            sendmessage.Usernumber = usernumber;
-                            sendmessage.message = jsonHelp.nickinfo(nickname);
-                            sendmessage.check = 2;
+                            lock (clientlistinlock)
+                            {
+                                clientlist.Add(new Clientdata(socket, id)); //서버에 login을 했으니 정보를 추가해줘야함
+                            }
+                                int usernumber = dBhelp.Getusernumber(id);
+                                string nickname = dBhelp.Getnickname(usernumber);
+                                sendmessage.Usernumber = usernumber;
+                                sendmessage.message = jsonHelp.nickinfo(nickname);
+                                sendmessage.check = 2;
                         }
                     }
                     if (!idcheck && !passcheck) sendmessage.check = 3;
@@ -121,7 +130,10 @@ namespace ConsoleApp1.Module
                         Clientdata LogoutData = clientlist.Find(x => (x.id == logoutid));
                         sendmessage.command = Command.logout;
                         sendclient.Add(new SocketData(socket, sendmessage));
-                        clientlist.Remove(LogoutData);
+                        lock (clientlistoutlock)
+                        {
+                            clientlist.Remove(LogoutData);
+                        }
                     }
                     break;
                 case Command.Findid:
@@ -222,7 +234,10 @@ namespace ConsoleApp1.Module
                     // 5. 초대한 친구들중 내가 차단한 사람은 있는지(이거 아직 구현안함,안해도됨)
                     string[] currentFriendlist = dBhelp.Refreshnickarray(musernickname);
                     bool notregistered = false;
-                    for(int i = 0; i < makenickarray.Count; i++)
+                    bool alllogin = true;
+                    bool roompossible = false;
+                    bool nochatMake = false;
+                    for (int i = 0; i < makenickarray.Count; i++)
                     {
                         bool check= currentFriendlist.Contains(makenickarray[i]);
                         if (!check)
@@ -239,85 +254,101 @@ namespace ConsoleApp1.Module
                     }
                     else
                     {
-                        //1번을 체크(요청당한 닉네임들을 체크)
-                        bool alllogin = true;
-                        for(int i = 0; i < makenickarray.Count; i++)
+                        //초대한 사람중에 차단한 사람이 존재하는지 -> 이거 그냥 Blockfriendlist쓰면됨(수정다시)
+                        for (int i = 0; i < currentFriendlist.Length; i++)
                         {
-                            bool check = clientlist.Exists(x => x.id == makenickarray[i]);
-                            if (!check)
+                            bool blockMakechatcheck = dBhelp.Isexistblock(currentFriendlist[i], musernickname);
+                            if (blockMakechatcheck == true)
                             {
-                                alllogin = false;
+                                nochatMake = true;
                                 break;
                             }
                         }
-                        if (!alllogin) // 모두가 들어오지않음
+                        if (nochatMake)
                         {
-                            sendmessage.check = 1;
+                            sendmessage.check = 4;
                             sendmessage.command = Command.Makechat;
                             sendclient.Add(new SocketData(socket, sendmessage));
                         }
                         else
                         {
-                            makenickarray.Add(musernickname);
-                            bool roompossible = false;
-                            int makenickcnt = makenickarray.Count;
-                            for(int i = 0; i < chattinglist.Count; i++)
+                            lock (clientlistinlock) //로그인관련 lock
                             {
-                                List<string> currentroommembers = chattinglist[i].chatnickarray;
-                                int cnt = 0;
-                                for(int j = 0; j < currentroommembers.Count; j++)
+                                //1번을 체크(요청당한 닉네임들을 체크)
+                                for (int i = 0; i < makenickarray.Count; i++)
                                 {
-                                    bool same = makenickarray.Contains(currentroommembers[j]);
-                                    if (same) cnt++;
-                                }
-                                if (cnt == makenickcnt && currentroommembers.Count == makenickarray.Count)
-                                {
-                                    roompossible = true;
-                                    break;
-                                }
-                            }
-                            if (roompossible) //동일한 채팅방존재
-                            {
-                                sendmessage.check = 2;
-                                sendmessage.command = Command.Makechat;
-                                sendclient.Add(new SocketData(socket, sendmessage));
-                            }
-                            else{ //초대한 사람중에 차단한 사람이 존재하는지 -> 이거 그냥 Blockfriendlist쓰면됨(수정다시)
-                                bool nochatMake = false;
-                                for (int i = 0; i < currentFriendlist.Length; i++) {
-                                    bool blockMakechatcheck = dBhelp.Isexistblock(currentFriendlist[i],musernickname);
-                                    if(blockMakechatcheck == true)
+                                    bool check = clientlist.Exists(x => x.id == makenickarray[i]);
+                                    if (!check)
                                     {
-                                        nochatMake = true;
+                                        alllogin = false;
                                         break;
                                     }
                                 }
-                                if (nochatMake)
+                                if (alllogin)
                                 {
-                                    sendmessage.check = 4;
+                                    lock (clientlistoutlock) //로그아웃관련 lock
+                                    {
+                                        lock (chattinglistlock) //채팅리스트관련 lock -> 다른곳에서 수정못하게
+                                        {
+                                            bool roomcheck = false;
+                                            makenickarray.Add(musernickname);
+                                            int makenickcnt = makenickarray.Count;
+                                            for (int i = 0; i < chattinglist.Count; i++)
+                                            {
+                                                List<string> currentroommembers = chattinglist[i].chatnickarray;
+                                                int cnt = 0;
+                                                for (int j = 0; j < currentroommembers.Count; j++)
+                                                {
+                                                    bool same = makenickarray.Contains(currentroommembers[j]);
+                                                    if (same) cnt++;
+                                                }
+                                                if (cnt == makenickcnt && currentroommembers.Count == makenickarray.Count)
+                                                {
+                                                    roomcheck = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (roomcheck) //동일한 채팅방존재
+                                            {
+                                                roompossible = true;
+                                                sendmessage.check = 2;
+                                                sendmessage.command = Command.Makechat;
+                                                sendclient.Add(new SocketData(socket, sendmessage));
+                                            }
+                                            else
+                                            {
+                                                //채팅방개설(초대된 닉네임을 매칭시켜서 걔네한테 뿌리면됨
+                                                int newchatnumber = 0;
+                                                lock (chattinglistlock)
+                                                {
+                                                    newchatnumber = chattinglist.Count + 1;
+                                                    //makenickarray.Add(musernickname);
+
+                                                    chattinglist.Add(new Chattingdata(newchatnumber, makenickarray));
+                                                }
+                                                sendmessage.command = Command.Makechat;
+                                                sendmessage.Chatnumber = newchatnumber;
+                                                sendmessage.check = 3;
+                                                List<Clientdata> tempsend = new List<Clientdata>();
+                                                for (int i = 0; i < makenickarray.Count; i++)
+                                                {
+                                                    string makeid = dBhelp.Getid(makenickarray[i]);
+                                                    Clientdata client = clientlist.Find(x => x.id == makeid);
+                                                    if (client != null) tempsend.Add(client);
+                                                }
+                                                for (int i = 0; i < tempsend.Count; i++)
+                                                {
+                                                    sendclient.Add(new SocketData(tempsend[i].socket, sendmessage)); //수신자,(송신자도 포함) 송신
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                else //로그인 모두가 들어오지않음
+                                {
+                                    sendmessage.check = 1;
                                     sendmessage.command = Command.Makechat;
                                     sendclient.Add(new SocketData(socket, sendmessage));
-                                }
-                                else
-                                {//채팅방개설(초대된 닉네임을 매칭시켜서 걔네한테 뿌리면됨
-                                    int newchatnumber = chattinglist.Count + 1;
-                                    //makenickarray.Add(musernickname);
-
-                                    chattinglist.Add(new Chattingdata(newchatnumber, makenickarray));
-                                    sendmessage.command = Command.Makechat;
-                                    sendmessage.Chatnumber = newchatnumber;
-                                    sendmessage.check = 3;
-                                    List<Clientdata> tempsend = new List<Clientdata>();
-                                    for (int i = 0; i < makenickarray.Count; i++)
-                                    {
-                                        string makeid = dBhelp.Getid(makenickarray[i]);
-                                        Clientdata client = clientlist.Find(x => x.id == makeid);
-                                        tempsend.Add(client);
-                                    }
-                                    for (int i = 0; i < tempsend.Count; i++)
-                                    {
-                                        sendclient.Add(new SocketData(tempsend[i].socket, sendmessage)); //수신자,(송신자도 포함) 송신
-                                    }
                                 }
                             }
                         }
@@ -333,18 +364,22 @@ namespace ConsoleApp1.Module
                     sendmessage.command = Command.Sendchat;
                     sendmessage.Chatnumber = receivemessage.Chatnumber;
                     sendmessage.message = jsonHelp.Sendchatinfo(sendMessage,sendchatnickname);
-                    // 채팅방찾기 -> 보낼 정보들 가져오기->clientlist에서 찾기(socket정보, 그리고 sendmessage에 같이 담아서 보냄)
-                    for(int i = 0; i < chattinglist.Count; i++)
+                    lock (chattinglistlock)
                     {
-                        if(sendchatnumber == chattinglist[i].chatnumber)
+                        // 채팅방찾기 -> 보낼 정보들 가져오기->clientlist에서 찾기(socket정보, 그리고 sendmessage에 같이 담아서 보냄)
+                        for (int i = 0; i < chattinglist.Count; i++)
                         {
-                            List<string> sendchatnickarray = chattinglist[i].chatnickarray;
-                            for (int j = 0; j < sendchatnickarray.Count; j++) {
-                                string sendid = dBhelp.Getid(sendchatnickarray[j]);
-                                Clientdata c = clientlist.Find(x => x.id == sendid);
-                                if (c != null && sendid!=sendmessageid) sendclient.Add(new SocketData(c.socket,sendmessage));
+                            if (sendchatnumber == chattinglist[i].chatnumber)
+                            {
+                                List<string> sendchatnickarray = chattinglist[i].chatnickarray;
+                                for (int j = 0; j < sendchatnickarray.Count; j++)
+                                {
+                                    string sendid = dBhelp.Getid(sendchatnickarray[j]);
+                                    Clientdata c = clientlist.Find(x => x.id == sendid);
+                                    if (c != null && sendid != sendmessageid) sendclient.Add(new SocketData(c.socket, sendmessage));
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
                     break;
@@ -358,36 +393,41 @@ namespace ConsoleApp1.Module
                     outsendmessage.check = 1; // 방을 나갈사람
                     outsendmessage.Chatnumber = chatnumber;
                     outsendmessage.command = Command.Outchat;
-                    Clientdata clientdata = clientlist.Find(x => x.id == outchatid);
-                    if(clientdata!= null) sendclient.Add(new SocketData(clientdata.socket,outsendmessage));
-                    for (int i = 0; i < chattinglist.Count; i++)
+                    lock (clientlistoutlock)
                     {
-                        if(chatnumber == chattinglist[i].chatnumber) //방번호찾기
+                        Clientdata clientdata = clientlist.Find(x => x.id == outchatid);
+                        if (clientdata != null) sendclient.Add(new SocketData(clientdata.socket, outsendmessage));
+                        lock (chattinglistlock)
                         {
-                            oidx = i;
-                            List<string> outchattinglist = chattinglist[i].chatnickarray;
-                            for(int j = 0; j < outchattinglist.Count; j++)
+                            for (int i = 0; i < chattinglist.Count; i++)
                             {
-                                if (outchatnickname == outchattinglist[j])
+                                if (chatnumber == chattinglist[i].chatnumber) //방번호찾기
                                 {
-                                    idx = j; //채팅방을 나가는 인덱스
+                                    oidx = i;
+                                    List<string> outchattinglist = chattinglist[i].chatnickarray;
+                                    for (int j = 0; j < outchattinglist.Count; j++)
+                                    {
+                                        if (outchatnickname == outchattinglist[j])
+                                        {
+                                            idx = j; //채팅방을 나가는 인덱스
+                                            break;
+                                        }
+                                    }
+                                    if (idx != -1) chattinglist[oidx].chatnickarray.RemoveAt(idx);
                                     break;
                                 }
                             }
-                            if(idx!=-1) chattinglist[oidx].chatnickarray.RemoveAt(idx);
-                            break;
+                            sendmessage.command = Command.Outchat;
+                            sendmessage.Chatnumber = chatnumber;
+                            sendmessage.check = 0; // 방에 남아있는 사람들
+                            sendmessage.message = jsonHelp.nickinfo(outchatnickname);
+                            for (int i = 0; i < chattinglist[oidx].chatnickarray.Count; i++)
+                            {
+                                string outsendid = dBhelp.Getid(chattinglist[oidx].chatnickarray[i]);
+                                Clientdata outc = clientlist.Find(x => x.id == outsendid);
+                                if (outc != null) sendclient.Add(new SocketData(outc.socket, sendmessage));
+                            }
                         }
-                    }
-
-                    sendmessage.command = Command.Outchat;
-                    sendmessage.Chatnumber = chatnumber;
-                    sendmessage.check = 0; // 방에 남아있는 사람들
-                    sendmessage.message = jsonHelp.nickinfo(outchatnickname);
-                    for (int i = 0; i < chattinglist[oidx].chatnickarray.Count; i++)
-                    {
-                        string outsendid = dBhelp.Getid(chattinglist[oidx].chatnickarray[i]);
-                        Clientdata outc = clientlist.Find(x => x.id == outsendid);
-                        if (outc != null) sendclient.Add(new SocketData(outc.socket, sendmessage));
                     }
 
                     break;
@@ -398,21 +438,7 @@ namespace ConsoleApp1.Module
                     string joinchatnickname = Joinchatnickname[JsonName.Nickname]; //초대를 하는 사람
                     int joinchatnumber = receivemessage.Chatnumber;
                     int jidx = -1;
-                    Clientdata JoinData = clientlist.Find(x => x.id == joinedchatid);
-                    Clientdata checkJoindata = clientlist.Find(x => x.id == dBhelp.Getid(joinchatnickname));
-                    if (checkJoindata == null) //초대한놈이 로그아웃됨
-                    {
-                        sendmessage.check = 6;
-                        sendmessage.command = Command.Joinchat;
-                        sendclient.Add(new SocketData(socket, sendmessage));
-                    }
-                    else if (JoinData == null) //초대당한놈이 로그아웃됨
-                    {
-                        sendmessage.check = 0;
-                        sendmessage.command = Command.Joinchat;
-                        sendclient.Add(new SocketData(socket, sendmessage));
-                    }
-                    else if (!dBhelp.IsexistID(joinedchatid)) //아이디가 존재하는지
+                    if (!dBhelp.IsexistID(joinedchatid)) //아이디가 존재하는지
                     {
                         sendmessage.check = 2;
                         sendmessage.command = Command.Joinchat;
@@ -426,56 +452,78 @@ namespace ConsoleApp1.Module
                     }
                     else
                     {
-                        bool joinno = false;
-                        for (int i = 0; i < chattinglist.Count; i++)
-                        {
-                            if (joinchatnumber == chattinglist[i].chatnumber)
-                            {
-                                jidx = i;
-                                for (int j = 0; j < chattinglist[i].chatnickarray.Count; j++)
+                        lock (clientlistoutlock) { //로그아웃관련lock
+                                Clientdata JoinData = clientlist.Find(x => x.id == joinedchatid);
+                                Clientdata checkJoindata = clientlist.Find(x => x.id == dBhelp.Getid(joinchatnickname));
+                                if (checkJoindata == null) //초대한놈이 로그아웃됨
                                 {
-                                    if (chattinglist[i].chatnickarray[j] == dBhelp.Getnickname(joinedchatid))
-                                    {
-                                        joinno = true;
-                                        break;
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                        if (joinno)
-                        {
-                            sendmessage.check = 4;
-                            sendmessage.command = Command.Joinchat;
-                            sendclient.Add(new SocketData(socket, sendmessage));
-                        }
-                        else
-                        {
-                            if (!dBhelp.Isexistblock(dBhelp.Getnickname(joinedchatid), joinchatnickname) && !dBhelp.Isexistblock(joinchatnickname, dBhelp.Getnickname(joinedchatid))) //로그인이 되어있거나, 친구차단을안했거나
-                            {
-                                TCPmessage joinsendmessage = new TCPmessage(); //초대받는 친구에게는 따로 command를 보내야함
-                                joinsendmessage.Chatnumber = joinchatnumber;
-                                joinsendmessage.command = Command.ReceiveJoinchat;
-                                joinsendmessage.check = 1;
-                                sendclient.Add(new SocketData(JoinData.socket, joinsendmessage));
-                                // 초대를 한 당사자는 초대ok된 메시지도 오는거고, 초대가 완료되었다는 메시지도 감
-                                sendmessage.command = Command.Joinchat;
-                                sendmessage.Chatnumber = joinchatnumber;
-                                sendmessage.message = jsonHelp.nickinfo(dBhelp.Getnickname(joinedchatid));
-                                sendmessage.check = 1; //만약 친구거부를 안했다면, 오케이(아직 자세하게는 예외처리 안함)
-                                for (int i = 0; i < chattinglist[jidx].chatnickarray.Count; i++) //기존에 있는방의 멤버들
-                                {
-                                    string joinsendid = chattinglist[jidx].chatnickarray[i];
-                                    Clientdata joinc = clientlist.Find(x => x.id == joinsendid);
-                                    if (joinc != null) sendclient.Add(new SocketData(joinc.socket, sendmessage));
-                                }
-                                chattinglist[jidx].chatnickarray.Add(dBhelp.Getnickname(joinedchatid)); //초대당한놈
-                            }
-                            else
-                            {
-                                sendmessage.check = 5;
+                                sendmessage.check = 6;
                                 sendmessage.command = Command.Joinchat;
                                 sendclient.Add(new SocketData(socket, sendmessage));
+                                }
+                                else if (JoinData == null) //초대당한놈이 로그아웃됨
+                                {
+                                sendmessage.check = 0;
+                                sendmessage.command = Command.Joinchat;
+                                sendclient.Add(new SocketData(socket, sendmessage));
+                                }
+                                else
+                                {
+                                lock (chattinglistlock)
+                                {
+                                    bool joinno = false;
+                                    for (int i = 0; i < chattinglist.Count; i++)
+                                    {
+                                        if (joinchatnumber == chattinglist[i].chatnumber)
+                                        {
+                                            jidx = i;
+                                            for (int j = 0; j < chattinglist[i].chatnickarray.Count; j++)
+                                            {
+                                                if (chattinglist[i].chatnickarray[j] == dBhelp.Getnickname(joinedchatid))
+                                                {
+                                                    joinno = true;
+                                                    break;
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                    if (joinno)
+                                    {
+                                        sendmessage.check = 4;
+                                        sendmessage.command = Command.Joinchat;
+                                        sendclient.Add(new SocketData(socket, sendmessage));
+                                    }
+                                    else
+                                    {
+                                        if (!dBhelp.Isexistblock(dBhelp.Getnickname(joinedchatid), joinchatnickname) && !dBhelp.Isexistblock(joinchatnickname, dBhelp.Getnickname(joinedchatid))) //로그인이 되어있거나, 친구차단을안했거나
+                                        {
+                                            TCPmessage joinsendmessage = new TCPmessage(); //초대받는 친구에게는 따로 command를 보내야함
+                                            joinsendmessage.Chatnumber = joinchatnumber;
+                                            joinsendmessage.command = Command.ReceiveJoinchat;
+                                            joinsendmessage.check = 1;
+                                            sendclient.Add(new SocketData(JoinData.socket, joinsendmessage));
+                                            // 초대를 한 당사자는 초대ok된 메시지도 오는거고, 초대가 완료되었다는 메시지도 감
+                                            sendmessage.command = Command.Joinchat;
+                                            sendmessage.Chatnumber = joinchatnumber;
+                                            sendmessage.message = jsonHelp.nickinfo(dBhelp.Getnickname(joinedchatid));
+                                            sendmessage.check = 1; //만약 친구거부를 안했다면, 오케이(아직 자세하게는 예외처리 안함)
+                                            for (int i = 0; i < chattinglist[jidx].chatnickarray.Count; i++) //기존에 있는방의 멤버들
+                                            {
+                                                string joinsendid = chattinglist[jidx].chatnickarray[i];
+                                                Clientdata joinc = clientlist.Find(x => x.id == joinsendid);
+                                                if (joinc != null) sendclient.Add(new SocketData(joinc.socket, sendmessage));
+                                            }
+                                            chattinglist[jidx].chatnickarray.Add(dBhelp.Getnickname(joinedchatid)); //초대당한놈
+                                        }
+                                        else
+                                        {
+                                            sendmessage.check = 5;
+                                            sendmessage.command = Command.Joinchat;
+                                            sendclient.Add(new SocketData(socket, sendmessage));
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -565,16 +613,19 @@ namespace ConsoleApp1.Module
                     int refreshchatnumber = receivemessage.Chatnumber;
                     sendmessage.command = Command.Refreshchatnickarray;
                     List<string> refreshchatlist = new List<string>();
-                    for(int i = 0; i < chattinglist.Count; i++)
+                    lock (chattinglistlock)
                     {
-                        if(chattinglist[i].chatnumber == refreshchatnumber)
+                        for (int i = 0; i < chattinglist.Count; i++)
                         {
-                            for(int j = 0; j < chattinglist[i].chatnickarray.Count; j++)
+                            if (chattinglist[i].chatnumber == refreshchatnumber)
                             {
-                                if (refreshchatnickname == chattinglist[i].chatnickarray[j]) continue;
-                                else refreshchatlist.Add(chattinglist[i].chatnickarray[j]);
+                                for (int j = 0; j < chattinglist[i].chatnickarray.Count; j++)
+                                {
+                                    if (refreshchatnickname == chattinglist[i].chatnickarray[j]) continue;
+                                    else refreshchatlist.Add(chattinglist[i].chatnickarray[j]);
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
                     sendmessage.message = jsonHelp.Refreshchatnickarrayinfo(refreshchatlist);
@@ -587,19 +638,22 @@ namespace ConsoleApp1.Module
                     string changeroomname = ChangeRoomname[JsonName.Roomname];
                     string checkoutnickname = Checkoutnickname[JsonName.Nickname];
                     int changeroomnumber = receivemessage.Chatnumber;
-                    if (clientlist.Exists(x => x.id == dBhelp.Getid(checkoutnickname)))
+                    lock (clientlistoutlock)
                     {
-                        sendmessage.command = Command.Changeroomname;
-                        sendmessage.message = jsonHelp.roomnameinfo(changeroomname);
-                        sendmessage.Chatnumber = changeroomnumber;
-                        sendmessage.check = 1;
-                        sendclient.Add(new SocketData(socket, sendmessage));
-                    }
-                    else
-                    {
-                        sendmessage.command = Command.Changeroomname;
-                        sendmessage.check = 0;
-                        sendclient.Add(new SocketData(socket, sendmessage));
+                        if (clientlist.Exists(x => x.id == dBhelp.Getid(checkoutnickname)))
+                        {
+                            sendmessage.command = Command.Changeroomname;
+                            sendmessage.message = jsonHelp.roomnameinfo(changeroomname);
+                            sendmessage.Chatnumber = changeroomnumber;
+                            sendmessage.check = 1;
+                            sendclient.Add(new SocketData(socket, sendmessage));
+                        }
+                        else
+                        {
+                            sendmessage.command = Command.Changeroomname;
+                            sendmessage.check = 0;
+                            sendclient.Add(new SocketData(socket, sendmessage));
+                        }
                     }
                     break;
             }
