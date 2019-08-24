@@ -16,6 +16,7 @@ namespace ConsoleApp1.Module
             try
             {
                 string s = $"Server=chat.cyf9co0c11tw.ap-northeast-2.rds.amazonaws.com;Database=test;Uid=admin;Pwd=12345678;charset=utf8";
+                //string s = $"Server=localhost;Database=test;Uid=root;Pwd=1234;charset=utf8";
                 this.dbconnect = new MySqlConnection(s);
             }
             catch (Exception e)
@@ -68,8 +69,8 @@ namespace ConsoleApp1.Module
         public int GetCountRow(string s)
         {
             DataSet dataSet = selectquery(s);
-            if (dataSet == null) return 0;
-            return dataSet.Tables[0].Rows.Count;
+            if (dataSet.Tables.Count== 0 ) return 0; //dataSet은 null로 안온다 이거예외처리해야함 ㅇㅇ
+            else return dataSet.Tables[0].Rows.Count;
         }
         public bool IsexistRow(string s)
         {

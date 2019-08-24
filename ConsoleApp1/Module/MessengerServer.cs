@@ -50,12 +50,15 @@ namespace ConsoleApp1.Module
                     if (validlogin)
                     {
                         bool duplicate = false;
-                        foreach (Clientdata c in clientlist) //중복로그인 방지
+                        lock (clientlistinlock) //중복로그인되면 안되니까(이거잘 모르겠다ㅇㅇ)
                         {
-                            if (c.id == id)
+                            foreach (Clientdata c in clientlist) //중복로그인 방지
                             {
-                                duplicate = true;
-                                break;
+                                if (c.id == id)
+                                {
+                                    duplicate = true;
+                                    break;
+                                }
                             }
                         }
                         if (duplicate) //중복로그인
@@ -319,13 +322,9 @@ namespace ConsoleApp1.Module
                                             {
                                                 //채팅방개설(초대된 닉네임을 매칭시켜서 걔네한테 뿌리면됨
                                                 int newchatnumber = 0;
-                                                lock (chattinglistlock)
-                                                {
-                                                    newchatnumber = chattinglist.Count + 1;
-                                                    //makenickarray.Add(musernickname);
-
-                                                    chattinglist.Add(new Chattingdata(newchatnumber, makenickarray));
-                                                }
+                                                newchatnumber = chattinglist.Count + 1;
+                                                //makenickarray.Add(musernickname);
+                                                chattinglist.Add(new Chattingdata(newchatnumber, makenickarray));
                                                 sendmessage.command = Command.Makechat;
                                                 sendmessage.Chatnumber = newchatnumber;
                                                 sendmessage.check = 3;
