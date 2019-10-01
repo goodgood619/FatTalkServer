@@ -10,15 +10,14 @@ namespace ConsoleApp1.Module
 {
     public class MessengerServer : TcpServer
     {
-        private const int serverport = 3300;
         private DBhelp dBhelp;
         private JsonHelp jsonHelp;
-        public List<Clientdata> clientlist { get; set; }
-        public List<Chattingdata> chattinglist { get; set; }
+        private List<Clientdata> clientlist { get; set; }
+        private List<Chattingdata> chattinglist { get; set; }
         private readonly object clientlistinlock; //로그인관련 lock
         private readonly object clientlistoutlock; //로그아웃관련 lock
         private readonly object chattinglistlock; //채팅창관련 lock
-        public MessengerServer()
+        public MessengerServer() 
         {
             this.dBhelp = new DBhelp();
             this.clientlist = new List<Clientdata>();
@@ -26,7 +25,7 @@ namespace ConsoleApp1.Module
             clientlistinlock = new object();
             clientlistoutlock = new object();
             chattinglistlock = new object();
-            Console.WriteLine($"Messenger Server Start : (Port: {serverport})");
+            Console.WriteLine($"Messenger Server Start : (Port: {this.servertport})");
         }
         public override List<SocketData> responseMessage(Socket socket, TCPmessage receivemessage)
         {
@@ -35,7 +34,7 @@ namespace ConsoleApp1.Module
             this.jsonHelp = new JsonHelp();
             switch (receivemessage.command)
             {
-                case Command.login:
+                case Command.login: 
                     Dictionary<string, string> logininfo = jsonHelp.getidinfo(receivemessage.message);
                     Dictionary<string, string> logininfo2 = jsonHelp.getpasswordinfo(receivemessage.message);
                     string id = logininfo[JsonName.ID];
@@ -76,6 +75,7 @@ namespace ConsoleApp1.Module
                                 sendmessage.Usernumber = usernumber;
                                 sendmessage.message = jsonHelp.nickinfo(nickname);
                                 sendmessage.check = 2;
+                                // java test code
                         }
                     }
                     if (!idcheck && !passcheck) sendmessage.check = 3;
@@ -131,8 +131,8 @@ namespace ConsoleApp1.Module
                     {
                         string logoutid = dBhelp.Getid(logoutnickname);
                         Clientdata LogoutData = clientlist.Find(x => (x.id == logoutid));
-                        sendmessage.command = Command.logout;
-                        sendclient.Add(new SocketData(socket, sendmessage));
+                        //sendmessage.command = Command.logout;
+                        //sendclient.Add(new SocketData(socket, sendmessage));
                         lock (clientlistoutlock)
                         {
                             clientlist.Remove(LogoutData);

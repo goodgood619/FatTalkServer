@@ -16,11 +16,10 @@ namespace ConsoleApp1.Module
         private Socket serversocket = null;
         private byte[] receivedata;
         private List<Socket> clist = new List<Socket>();
-        private int servertport=3300;
+        protected int servertport= 3300;
         public TcpServer()
         {
             receivedata = new byte[33200];
-            //this.serverport = serverport;
             Connect();
         }
 
@@ -31,7 +30,7 @@ namespace ConsoleApp1.Module
                 IPEndPoint ep = new IPEndPoint(IPAddress.Any,servertport);
                 serversocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 serversocket.Bind(ep);
-                serversocket.Listen(5);
+                serversocket.Listen(10);
                 serversocket.BeginAccept(accept_callback, null);
             }
             catch (Exception e)
@@ -70,7 +69,6 @@ namespace ConsoleApp1.Module
             {
                 Console.WriteLine(e.ToString());
             }
-
 
         }
         private void send_callback(IAsyncResult ar)

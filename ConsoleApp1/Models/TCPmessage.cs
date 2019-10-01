@@ -35,7 +35,8 @@ namespace ConsoleApp1.Models
             int melength = BitConverter.ToInt32(data, 20);
             if (melength > 0)
             {
-                message = Encoding.Unicode.GetString(data, 24, melength);
+                message = Encoding.Unicode.GetString(data, 24, melength); // for (C# WPF)client
+                //message = Encoding.UTF8.GetString(data, 24, melength); // for (java Android) client
             }
 
         }
@@ -48,8 +49,10 @@ namespace ConsoleApp1.Models
             bytedata.AddRange(BitConverter.GetBytes((int)Usernumber));
             bytedata.AddRange(BitConverter.GetBytes((int)Friendcount));
             bytedata.AddRange(BitConverter.GetBytes((int)Chatnumber));
-            bytedata.AddRange(BitConverter.GetBytes(Encoding.Unicode.GetByteCount(message)));
-            bytedata.AddRange(Encoding.Unicode.GetBytes(message));
+            bytedata.AddRange(BitConverter.GetBytes(Encoding.Unicode.GetByteCount(message)));// for C# client
+            bytedata.AddRange(Encoding.Unicode.GetBytes(message)); // for C# client
+            //bytedata.AddRange(BitConverter.GetBytes(Encoding.UTF8.GetByteCount(message))); // for (java Android) client
+            //bytedata.AddRange(Encoding.UTF8.GetBytes(message)); // for (java Android) client
 
             return bytedata.ToArray();
         }
